@@ -2,7 +2,7 @@
 (function () {
   "use strict";
 
-  const VERSION_APP = "19"; // à incrémenter avec VERSION dans sw.js
+  const VERSION_APP = "20"; // à incrémenter avec VERSION dans sw.js
 
   const Store = {
     get(cle, defaut) {
@@ -250,14 +250,17 @@
       let badge = "";
       if (e.enCours) badge = `<span class="pz-badge encours">En cours</span>`;
       else if (e.reussites) badge = `<span class="pz-badge fini">✓ Réussi${e.reussites > 1 ? " ×" + e.reussites : ""}</span>`;
-      return `<a class="pz-carte" href="#/puzzle/${encodeURIComponent(p.id)}">
+      const retirer = p.perso ? `<button class="pz-retirer" data-retirer="${echap(p.id)}" aria-label="Retirer cette photo">✕</button>` : "";
+      return `<div class="pz-bloc"><a class="pz-carte" href="#/puzzle/${encodeURIComponent(p.id)}">
           <img src="${p.mini}" alt="${echap(p.titre)}">${badge}
-        </a>`;
+        </a>${retirer}</div>`;
     }).join("");
+    const ajout = `<div class="pz-bloc"><a class="pz-carte pz-ajout" href="#/ajouter-photo"><span>＋</span>Ajouter une photo</a></div>`;
     const vide = `
         <div class="vide">
           <p>Aucune image pour l'instant.</p>
           <a class="btn btn-principal" href="#/bibliotheque">Choisir des images dans la Bibliothèque</a>
+          <a class="btn" href="#/ajouter-photo">Ajouter une de mes photos</a>
         </div>`;
     app.innerHTML = `
       <div class="page">
@@ -265,9 +268,139 @@
           <a class="btn btn-retour" href="#/">← Accueil</a>
           <h1>Puzzle</h1>
         </header>
-        ${liste.length ? `<p class="pz-consigne">Choisissez une image</p><div class="pz-cartes">${cartes}</div>
+        ${liste.length ? `<p class="pz-consigne">Choisissez une image</p><div class="pz-cartes">${ajout}${cartes}</div>
         <p class="vers-biblio">D'autres images sont disponibles dans la <a href="#/bibliotheque">Bibliothèque</a>.</p>` : vide}
       </div>`;
+    app.querySelectorAll("[data-retirer]").forEach((b) => b.addEventListener("click", () => {
+      modal({
+        titre: "Retirer cette photo ?",
+        html: "<p>Elle sera effacée de l'appli. La photo d'origine n'est pas touchée.</p>",
+        boutons: [
+          { label: "Non, garder" },
+          { label: "Oui, retirer", classe: "btn-danger", action: async () => {
+            await window.Bibliotheque.retirerPhoto(b.dataset.retirer);
+            if (location.hash.replace(/^#\/?/, "") === "puzzle") ecranListePZ();
+          } },
+        ],
+      });
+    }));
+  }
+
+  // ---------- Ajout d'une photo personnelle ----------
+  // Source : Google Photos ou les photos de la tablette ; puis recadrage au format du puzzle (2:3).
+  // La photo est réencodée : ses métadonnées (lieu, appareil, date) ne sont pas conservées.
+  function ecranAjoutPhoto() {
+    vider();
+    document.title = "Ajouter une photo";
+    const gp = window.GooglePhotos.disponible;
+    app.innerHTML = `
+      <div class="page">
+        <header class="barre">
+          <a class="btn btn-retour" href="#/puzzle">← Puzzle</a>
+          <h1>Ajouter une photo</h1>
+        </header>
+        <div class="ajout">
+          <p class="ajout-texte">Où se trouve la photo ?</p>
+          ${gp ? `<button class="btn btn-principal ajout-source" data-src="google">Google Photos</button>` : ""}
+          <button class="btn ${gp ? "" : "btn-principal "}ajout-source" data-src="tablette">Photos de la tablette</button>
+          <input type="file" accept="image/*" hidden>
+          <div class="ajout-etat"></div>
+          <p class="ajout-note">La photo reste sur cette tablette : elle n'est envoyée nulle part.</p>
+        </div>
+      </div>`;
+    const ecran = app.firstElementChild;
+    const etat = ecran.querySelector(".ajout-etat");
+    const fichier = ecran.querySelector("input[type=file]");
+    const ici = () => app.firstElementChild === ecran;
+    let abandon = false;
+    nettoyage = () => { abandon = true; };
+    if (gp) window.GooglePhotos.preparer();
+
+    fichier.addEventListener("change", () => {
+      const f = fichier.files[0];
+      if (f) preparer(f);
+    });
+    ecran.querySelectorAll("[data-src]").forEach((b) => b.addEventListener("click", async () => {
+      if (b.dataset.src === "tablette") { fichier.value = ""; fichier.click(); return; }
+      abandon = false;
+      etat.innerHTML = `<p>Connexion à Google…</p>`;
+      try {
+        const blob = await window.GooglePhotos.choisirPhoto({
+          pret: (url) => {
+            if (!ici()) return;
+            etat.innerHTML = `
+              <p>Touchez « Ouvrir Google Photos », choisissez une photo, puis revenez ici.</p>
+              <a class="btn btn-principal" href="${echap(url)}" target="_blank" rel="noopener">Ouvrir Google Photos</a>
+              <button class="btn btn-discret" data-annuler>Annuler</button>`;
+            etat.querySelector("[data-annuler]").addEventListener("click", () => { abandon = true; etat.innerHTML = ""; });
+          },
+          annule: () => abandon || !ici(),
+        });
+        if (!ici()) return;
+        if (!blob) { etat.innerHTML = ""; return; }
+        preparer(blob);
+      } catch (e) {
+        if (!ici()) return;
+        etat.innerHTML = "";
+        toast("Google Photos n'a pas répondu. Vérifiez la connexion et réessayez.", 5000);
+      }
+    }));
+
+    async function preparer(blob) {
+      etat.innerHTML = `<p>Ouverture de la photo…</p>`;
+      let bmp;
+      try {
+        bmp = await createImageBitmap(blob, { imageOrientation: "from-image" });
+        // Les très grandes photos sont réduites (mémoire de la tablette).
+        const k = 3000 / Math.max(bmp.width, bmp.height);
+        if (k < 1) {
+          const petit = await createImageBitmap(bmp, { resizeWidth: Math.round(bmp.width * k), resizeHeight: Math.round(bmp.height * k), resizeQuality: "high" });
+          bmp.close();
+          bmp = petit;
+        }
+      } catch (e) {
+        if (ici()) { etat.innerHTML = ""; toast("Cette photo ne peut pas être ouverte.", 5000); }
+        return;
+      }
+      if (!ici()) { bmp.close(); return; }
+      recadrer(bmp);
+    }
+  }
+
+  // Le recadrage s'affiche sans changer d'adresse : « Annuler » revient au choix de la source.
+  function recadrer(bmp) {
+    vider();
+    document.title = "Recadrer la photo";
+    const fin = window.Recadrage.ouvrir(app, bmp, {
+      ratio: 2 / 3,
+      titre: "Recadrer",
+      surAnnuler: () => ecranAjoutPhoto(),
+      surValider: async (rect) => {
+        try {
+          const cible = window.Bibliotheque.varianteVoulue({ standard: { largeur: 1000 } }) === "standard" ? 1000 : 1600;
+          const l = Math.max(640, Math.min(cible, rect.w));
+          const image = await encoder(bmp, rect, l, Math.round(l * 1.5), 0.86);
+          const vignette = await encoder(bmp, rect, 320, 480, 0.8);
+          await window.Bibliotheque.ajouterPhoto({ image, vignette });
+          toast("Photo ajoutée.");
+        } catch (e) {
+          toast("La photo n'a pas pu être enregistrée.", 5000);
+        }
+        location.hash = "#/puzzle";
+      },
+    });
+    nettoyage = () => { fin(); bmp.close(); };
+  }
+
+  function encoder(source, r, l, h, qualite) {
+    const c = document.createElement("canvas");
+    c.width = l; c.height = h;
+    const ctx = c.getContext("2d");
+    ctx.imageSmoothingQuality = "high";
+    ctx.drawImage(source, r.x, r.y, r.w, r.h, 0, 0, l, h);
+    const vers = (type) => new Promise((ok) => c.toBlob(ok, type, qualite));
+    return vers("image/webp").then((b) => (b && b.type === "image/webp" ? b : vers("image/jpeg")))
+      .then((b) => { if (!b) throw new Error("encodage"); return b; });
   }
 
   function ecranJeuPZ(id) {
@@ -304,7 +437,7 @@
     // Éléments du serveur, puis éléments installés qui n'y figurent plus.
     const connus = (index ? index.elements : []).filter((e) => SECTIONS.some((s) => s.type === e.type));
     const ids = new Set(connus.map((e) => e.id));
-    const liste = [...connus, ...[...installes.values()].filter((e) => !ids.has(e.id))];
+    const liste = [...connus, ...[...installes.values()].filter((e) => !ids.has(e.id) && !e.local)];
     const enCours = new Set();
 
     const carte = (el, sec) => {
@@ -398,6 +531,7 @@
     else if (parts[0] === "mots-codes" && parts[1]) ecranJeuMC(parts[1]);
     else if (parts[0] === "mots-codes") ecranListeMC();
     else if (parts[0] === "bibliotheque") ecranBibliotheque();
+    else if (parts[0] === "ajouter-photo") ecranAjoutPhoto();
     else ecranPortail();
     window.scrollTo(0, 0);
   }

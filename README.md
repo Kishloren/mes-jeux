@@ -14,6 +14,7 @@ Cible prioritaire : les tablettes, en mode portrait.
   l'appli interroge l'API décrite dans [docs/specification-bibliotheque.md](docs/specification-bibliotheque.md)
   (`https://www.stansgames.fr/jeux-tablette/api`) et conserve les contenus téléchargés sur l'appareil (IndexedDB).
 - Aucune photo personnelle ne doit être ajoutée à ce dépôt public.
+- Photos personnelles : elles s'ajoutent depuis l'appli (Puzzle → « Ajouter une photo »), depuis la tablette ou Google Photos (mise en place : `docs/google-photos.md`). Elles sont recadrées, réencodées sans métadonnées et restent sur l'appareil.
 
 ## Mise en ligne
 

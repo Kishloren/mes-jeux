@@ -1,6 +1,6 @@
 // Service worker : l'application fonctionne hors connexion.
 // Changer VERSION à chaque mise en ligne pour forcer la mise à jour.
-const VERSION = "mes-jeux-v19";
+const VERSION = "mes-jeux-v20";
 const FICHIERS = [
   "./",
   "index.html",
@@ -14,6 +14,8 @@ const FICHIERS = [
   "js/bibliotheque.js",
   "js/data-mots-codes.js",
   "js/mots-codes.js",
+  "js/recadrage.js",
+  "js/google-photos.js",
   "icons/icon-192.png",
   "icons/icon-512.png",
   "icons/icon-512-maskable.png",

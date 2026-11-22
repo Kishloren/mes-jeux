@@ -53,7 +53,8 @@
     urls.forEach((u) => URL.revokeObjectURL(u));
     urls.clear();
     const ordre = new Map();
-    elements.sort((a, b) => a.titre.localeCompare(b.titre, "fr"));
+    // Mes photos d'abord, puis les contenus téléchargés par ordre alphabétique.
+    elements.sort((a, b) => (b.local ? 1 : 0) - (a.local ? 1 : 0) || a.titre.localeCompare(b.titre, "fr"));
     elements.forEach((e, i) => (e.contenu || []).forEach((id, j) => { if (!ordre.has(id)) ordre.set(id, i * 1000 + j); }));
     const rang = (x) => (ordre.has(x.id) ? ordre.get(x.id) : 1e9);
     etat.elements = elements;
@@ -62,6 +63,7 @@
       titre: im.titre,
       credit: im.credit,
       element: im.elements[0],
+      perso: im.elements[0] === MES_PHOTOS,
       get image() { return urlDe(im.image); },
       get mini() { return urlDe(im.vignette); },
     }));
@@ -233,8 +235,43 @@
     await charger();
   }
 
+  // ---------- Photos importées depuis la tablette ou Google Photos ----------
+  // Elles restent sur l'appareil, rangées dans l'élément local « mes-photos ».
+  const MES_PHOTOS = "mes-photos";
+
+  async function ajouterPhoto({ image, vignette, titre }) {
+    const d = await db();
+    const tx = d.transaction(["elements", "images"], "readwrite");
+    const sEl = tx.objectStore("elements");
+    const el = (await req(sEl.get(MES_PHOTOS))) || {
+      id: MES_PHOTOS, type: "images", local: true, version: 0, titre: "Mes photos",
+      description: "Photos ajoutées depuis la tablette ou Google Photos", contenu: [],
+    };
+    const id = "perso-" + Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
+    tx.objectStore("images").put({ id, titre: titre || "", credit: null, vignette, image, variante: "perso", elements: [MES_PHOTOS] });
+    el.contenu = [id, ...el.contenu]; // la plus récente en premier
+    sEl.put(el);
+    await finTx(tx);
+    await charger();
+    return id;
+  }
+
+  async function retirerPhoto(id) {
+    const d = await db();
+    const tx = d.transaction(["elements", "images"], "readwrite");
+    const sEl = tx.objectStore("elements");
+    const el = await req(sEl.get(MES_PHOTOS));
+    tx.objectStore("images").delete(id);
+    if (el) {
+      el.contenu = el.contenu.filter((x) => x !== id);
+      if (el.contenu.length) sEl.put(el); else sEl.delete(MES_PHOTOS);
+    }
+    await finTx(tx);
+    await charger();
+  }
+
   window.Bibliotheque = {
-    charger, lireIndex, installer, supprimer,
+    charger, lireIndex, installer, supprimer, ajouterPhoto, retirerPhoto, varianteVoulue,
     get elements() { return etat.elements; },
     get photos() { return etat.photos; },
     get grilles() { return etat.grilles; },
