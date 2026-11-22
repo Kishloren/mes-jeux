@@ -1,6 +1,6 @@
 # Spécification : API « Bibliothèque » de l'appli Mes jeux
 
-**Version de la spécification : 1.1 (22/11/2026)** — 1.1 : ajout des carnets de mots codés (§ 5 bis).
+**Version de la spécification : 1.1 (22/11/2026)** — 1.1 : ajout des carnets de mots codés (§ 5 bis), avec la règle 7 (lettre unique à un croisement).
 
 **Destinataires : les agents qui développent le back-office Node.js.**
 
@@ -332,8 +332,9 @@ Une grille de mots croisés **sans définitions**. Chaque lettre est remplacée 
 4. Aucun mot ne dépasse 9 lettres.
 5. Les cases blanches sont toutes reliées entre elles.
 6. `codes` respecte la règle décrite dans le tableau ; `devoiles` ne contient que des lettres présentes dans la grille.
+7. **Une lettre qui n'apparaît qu'une seule fois dans la grille doit se trouver à un croisement**, c'est-à-dire dans un mot horizontal et dans un mot vertical, pour que le joueur dispose de deux mots pour la deviner. Seule exception : une lettre de `devoiles`.
 
-L'appli vérifie les règles 1, 6 et la forme des `lignes`. Elle ne peut pas vérifier les mots (règle 2) : c'est au back-office de le garantir.
+L'appli vérifie les règles 1, 6, 7 et la forme des `lignes`, et ignore les grilles qui ne les respectent pas. Elle ne peut pas vérifier les mots (règle 2) : c'est au back-office de le garantir.
 
 ### Qualité attendue
 

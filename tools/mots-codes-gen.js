@@ -148,6 +148,13 @@ function remplir(g, index) {
   const compte = (bs) => { let n = 0; for (let v of bs) { while (v) { v &= v - 1; n++; } } return n; };
   const liste = (bs, I) => { const r = []; for (let i = 0; i < bs.length; i++) { let v = bs[i]; while (v) { const t = 31 - Math.clz32(v & -v); r.push(I.liste[i * 32 + t]); v &= v - 1; } } return r; };
 
+  // Toute lettre présente une seule fois doit être à un croisement (deux mots pour la deviner).
+  function uniquesCroisees() {
+    const nb = new Map();
+    lettres.forEach((x, k) => { if (x) nb.set(x, (nb.get(x) || 0) + 1); });
+    return lettres.every((x, k) => !x || nb.get(x) > 1 || parCase.get(k).length === 2);
+  }
+
   function etape() {
     if (--budget < 0) return false;
     let mieux = -1, mieuxN = Infinity, mieuxBs = null;
@@ -158,7 +165,7 @@ function remplir(g, index) {
       if (n === 0) return false;
       if (n < mieuxN) { mieuxN = n; mieux = i; mieuxBs = bs; }
     }
-    if (mieux < 0) return true;
+    if (mieux < 0) return uniquesCroisees();
     const s = slots[mieux], I = index.get(s.cases.length);
     // Ordre : tirage pondéré par la fréquence (les mots courants d'abord, avec du hasard).
     // Bonus pour les lettres encore absentes de la grille (on vise les 26 lettres).

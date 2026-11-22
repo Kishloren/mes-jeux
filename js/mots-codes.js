@@ -20,6 +20,18 @@
       if (nums.some((x) => !Number.isInteger(x) || x < 1 || x > n) || new Set(nums).size !== n) err.push("codes");
       if (Object.keys(g.codes).length !== n) err.push("codes en trop");
       if (!Array.isArray(g.devoiles) || g.devoiles.some((ch) => !presentes.includes(ch))) err.push("lettres données");
+      // Une lettre présente une seule fois (et non donnée) doit être à un croisement,
+      // pour être devinable par deux mots.
+      const blanc = (l, c) => l >= 0 && l < L.length && c >= 0 && c < C && L[l][c] !== "#";
+      const vues = {};
+      L.forEach((ligne, l) => [...ligne].forEach((ch, c) => {
+        if (ch !== "#") (vues[ch] = vues[ch] || []).push([l, c]);
+      }));
+      for (const [ch, pos] of Object.entries(vues)) {
+        if (pos.length !== 1 || g.devoiles.includes(ch)) continue;
+        const [l, c] = pos[0];
+        if (!((blanc(l, c - 1) || blanc(l, c + 1)) && (blanc(l - 1, c) || blanc(l + 1, c)))) err.push("lettre unique hors croisement : " + ch);
+      }
     } catch (e) {
       err.push("grille illisible");
     }
