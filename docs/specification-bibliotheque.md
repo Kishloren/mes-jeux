@@ -1,6 +1,6 @@
 # Spécification : API « Bibliothèque » de l'appli Mes jeux
 
-**Version de la spécification : 1.0 (22/11/2026)**
+**Version de la spécification : 1.1 (22/11/2026)** — 1.1 : ajout des carnets de mots codés (§ 5 bis).
 
 **Destinataires : les agents qui développent le back-office Node.js.**
 
@@ -88,7 +88,7 @@ Le back-office génère ces contenus et les publie selon cette spécification. L
 | Champ | Obligatoire | Description |
 |---|---|---|
 | `id` | oui | Identifiant stable de l'élément (voir § 2). |
-| `type` | oui | `"images"` pour un pack d'images, `"chasse-croise"` pour un carnet de grilles. D'autres types viendront ; l'appli ignore ceux qu'elle ne connaît pas. |
+| `type` | oui | `"images"` pour un pack d'images, `"chasse-croise"` pour un carnet de grilles de chassé-croisé, `"mots-codes"` pour un carnet de grilles de mots codés (§ 5 bis, depuis la version 1.1). D'autres types viendront ; l'appli ignore ceux qu'elle ne connaît pas. |
 | `titre` | oui | 60 caractères au plus. |
 | `description` | non | 200 caractères au plus. |
 | `langue` | oui | `"fr"`. |
@@ -284,6 +284,65 @@ Exemple validé par ces règles : la première grille de `docs/exemples/carnet-e
 Les citations doivent provenir d'œuvres **dans le domaine public**. En France, c'est le cas lorsque l'auteur est mort depuis plus de 70 ans au 1er janvier de l'année en cours, avec des prorogations de guerre possibles pour certains auteurs. Une traduction est elle-même protégée par les droits du traducteur.
 
 Le droit de courte citation ne couvre pas un usage dans un jeu commercial. Toute citation d'une œuvre récente est donc exclue, sauf licence obtenue. `source.domaine_public` doit valoir `true` et refléter une vérification réelle.
+
+## 5 bis. Carnets de mots codés (depuis la version 1.1)
+
+### Principe du jeu
+
+Une grille de mots croisés **sans définitions**. Chaque lettre est remplacée par un nombre, toujours le même, et deux lettres différentes ont toujours deux nombres différents. Quelques lettres sont données au départ. Le joueur retrouve les autres en reconnaissant les mots.
+
+### Manifeste
+
+`index.type` = `"mots-codes"`. Le manifeste suit le même principe que pour les carnets de chassé-croisé.
+
+```json
+{
+  "format": "mes-jeux-carnet-mc",
+  "version_format": 1,
+  "id": "mots-codes-01",
+  "version": 1,
+  "titre": "Mots codés n° 1",
+  "grilles": [
+    {
+      "id": "mc-0001",
+      "titre": "Grille 1",
+      "niveau": 2,
+      "lignes": ["ECLATENT#I", "TRAC#NEONS", "…"],
+      "codes": { "B": 1, "A": 2, "R": 3 },
+      "devoiles": ["T", "R", "A", "C"]
+    }
+  ]
+}
+```
+
+*Exemple tronqué : `lignes` et `codes` sont complets dans un vrai carnet.*
+
+| Champ | Obligatoire | Description |
+|---|---|---|
+| `id`, `titre`, `niveau` | oui | Comme pour le chassé-croisé (§ 5.3). |
+| `lignes` | oui | La solution, une chaîne par ligne. Chaque caractère est une lettre `A-Z` (normalisée, sans accent) ou `#` pour une case noire. Toutes les lignes ont la même longueur. |
+| `codes` | oui | Pour **chaque lettre présente** dans la grille, et seulement pour elles, son nombre. Les nombres vont de 1 à n, où n est le nombre de lettres différentes de la grille, sans doublon ni trou. L'attribution des nombres est aléatoire. |
+| `devoiles` | oui | Lettres données au départ : 2 à 5 lettres, par exemple celles d'un mot de 4 ou 5 lettres. |
+
+### Règles de validation (bloquantes)
+
+1. Taille : de 8 à 12 colonnes et de 10 à 14 lignes. Le format **10 colonnes × 12 lignes** est recommandé pour les tablettes en portrait.
+2. Toute suite horizontale ou verticale d'au moins 2 lettres est un **mot du dictionnaire**, et aucun mot n'apparaît deux fois dans la grille.
+3. Chaque case blanche appartient à au moins un mot de 2 lettres ou plus.
+4. Aucun mot ne dépasse 9 lettres.
+5. Les cases blanches sont toutes reliées entre elles.
+6. `codes` respecte la règle décrite dans le tableau ; `devoiles` ne contient que des lettres présentes dans la grille.
+
+L'appli vérifie les règles 1, 6 et la forme des `lignes`. Elle ne peut pas vérifier les mots (règle 2) : c'est au back-office de le garantir.
+
+### Qualité attendue
+
+- **Densité** : environ 15 à 20 % de cases noires, sans cases noires côte à côte.
+- **Vocabulaire** : des mots courants, sans mot vulgaire, violent ou morbide. Les formes fléchies sont acceptées : pluriels, féminins, verbes conjugués.
+- **Mots de 2 lettres** : uniquement des mots usuels (LE, UN, ET, OU, SI, NI, etc.).
+- **Lettres** : viser 17 lettres différentes ou plus. Les grilles qui contiennent K, W, X, Y ou Z sont plus intéressantes.
+
+Un générateur de référence (Node.js, dictionnaire Lexique 3) est disponible dans le dépôt de l'appli : `tools/mots-codes-gen.js`. Il respecte ces règles et peut servir de base au back-office.
 
 ## 6. Comportement de l'appli (pour information)
 

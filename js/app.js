@@ -2,7 +2,7 @@
 (function () {
   "use strict";
 
-  const VERSION_APP = "17"; // à incrémenter avec VERSION dans sw.js
+  const VERSION_APP = "18"; // à incrémenter avec VERSION dans sw.js
 
   const Store = {
     get(cle, defaut) {
@@ -79,6 +79,7 @@
   // Toutes les grilles : celles livrées avec l'appli puis celles de la Bibliothèque.
   const grilles = () => [...window.CC_GRILLES, ...window.Bibliotheque.grilles];
   const photos = () => window.Bibliotheque.photos;
+  const grillesMC = () => [...window.MC_GRILLES, ...window.Bibliotheque.motsCodes];
 
   function ecranPortail() {
     vider();
@@ -99,6 +100,12 @@
               <span>C</span><span>H</span><span>A</span><span>S</span>
             </span>
             <span class="tuile-nom">Chassé-croisé</span>
+          </a>
+          <a class="tuile" href="#/mots-codes">
+            <span class="tuile-icone tuile-mc" aria-hidden="true">
+              <span><small>7</small>M</span><span><small>3</small>O</span><span><small>12</small>T</span><span><small>9</small>S</span>
+            </span>
+            <span class="tuile-nom">Mots codés</span>
           </a>
           <a class="tuile" href="#/puzzle">
             <span class="tuile-icone ${p ? "tuile-puzzle" : ""}" aria-hidden="true">${icPuzzle}</span>
@@ -175,6 +182,65 @@
     nettoyage = window.ChasseCroise.ouvrir(app, g);
   }
 
+  function ecranListeMC() {
+    vider();
+    document.title = "Mots codés";
+    const carte = (g) => {
+      const p = window.MotsCodes.progression(g);
+      let etat, classe = "";
+      if (p.fini) { etat = "Terminée ✓"; classe = "finie"; }
+      else etat = `${p.trouves} lettres sur ${p.total}`;
+      const raz = p.fini || p.trouves > g.devoiles.length
+        ? `<button class="btn btn-raz" data-raz="${echap(g.id)}">↺ Recommencer cette grille</button>` : "";
+      return `
+        <div class="carte-bloc">
+          <a class="carte ${classe}" href="#/mots-codes/${encodeURIComponent(g.id)}">
+            <span class="carte-nom">${echap(g.nom)}</span>
+            <span class="carte-etat">${etat}</span>
+            <span class="barre-prog"><span style="width:${(100 * p.trouves) / p.total}%"></span></span>
+          </a>
+          ${raz}
+        </div>`;
+    };
+    const carnets = new Map();
+    grillesMC().forEach((g) => {
+      const c = g.carnet || "Grilles";
+      if (!carnets.has(c)) carnets.set(c, []);
+      carnets.get(c).push(g);
+    });
+    const sections = [...carnets].map(([nom, gs]) => `
+        <h2 class="section-titre">${echap(nom)}</h2>
+        <div class="cartes">${gs.map(carte).join("")}</div>`).join("");
+    app.innerHTML = `
+      <div class="page">
+        <header class="barre">
+          <a class="btn btn-retour" href="#/">← Accueil</a>
+          <h1>Mots codés</h1>
+        </header>
+        ${sections}
+        <p class="vers-biblio">D'autres grilles sont disponibles dans la <a href="#/bibliotheque">Bibliothèque</a>.</p>
+      </div>`;
+    app.querySelectorAll("[data-raz]").forEach((b) => b.addEventListener("click", () => {
+      const g = grillesMC().find((x) => x.id === b.dataset.raz);
+      modal({
+        titre: `Recommencer « ${echap(g.nom)} » ?`,
+        html: "<p>Toutes les lettres trouvées dans cette grille seront effacées.</p>",
+        boutons: [
+          { label: "Non, garder" },
+          { label: "Oui, recommencer", classe: "btn-danger", action: () => { window.MotsCodes.reinitialiser(g); ecranListeMC(); } },
+        ],
+      });
+    }));
+  }
+
+  function ecranJeuMC(id) {
+    const g = grillesMC().find((x) => x.id === id);
+    if (!g) { location.hash = "#/mots-codes"; return; }
+    vider();
+    document.title = "Mots codés — " + g.nom;
+    nettoyage = window.MotsCodes.ouvrir(app, g);
+  }
+
   function ecranListePZ() {
     vider();
     document.title = "Puzzle";
@@ -217,6 +283,7 @@
   const SECTIONS = [
     { type: "images", titre: "Images pour le puzzle", unite: (n) => n + (n > 1 ? " images" : " image") },
     { type: "chasse-croise", titre: "Grilles de chassé-croisé", unite: (n) => n + (n > 1 ? " grilles" : " grille") },
+    { type: "mots-codes", titre: "Grilles de mots codés", unite: (n) => n + (n > 1 ? " grilles" : " grille") },
   ];
 
   async function ecranBibliotheque() {
@@ -328,6 +395,8 @@
     else if (parts[0] === "chasse-croise") ecranListeCC();
     else if (parts[0] === "puzzle" && parts[1]) ecranJeuPZ(parts[1]);
     else if (parts[0] === "puzzle") ecranListePZ();
+    else if (parts[0] === "mots-codes" && parts[1]) ecranJeuMC(parts[1]);
+    else if (parts[0] === "mots-codes") ecranListeMC();
     else if (parts[0] === "bibliotheque") ecranBibliotheque();
     else ecranPortail();
     window.scrollTo(0, 0);

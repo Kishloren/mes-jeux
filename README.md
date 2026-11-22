@@ -1,6 +1,6 @@
 # Mes jeux
 
-Application web installable (PWA) de jeux pour tablette : Chassé-croisé et Puzzle.
+Application web installable (PWA) de jeux pour tablette : Chassé-croisé, Mots codés et Puzzle.
 Aucune dépendance, aucun build : fichiers statiques servis tels quels (GitHub Pages).
 Cible prioritaire : les tablettes, en mode portrait.
 
@@ -8,6 +8,8 @@ Cible prioritaire : les tablettes, en mode portrait.
 
 - Deux grilles de Chassé-croisé sont livrées avec l'appli ([js/data-chasse-croise.js](js/data-chasse-croise.js)),
   tirées d'œuvres du domaine public. Vérification : `node tools/validate.js`.
+- Trois grilles de Mots codés originales sont livrées avec l'appli ([js/data-mots-codes.js](js/data-mots-codes.js)),
+  produites par `node tools/mots-codes-gen.js <Lexique383.tsv> 12 10 <nombre> [graine]` (dictionnaire Lexique 3, non inclus).
 - Tout le reste (packs d'images pour le puzzle, carnets de grilles) vient de la **Bibliothèque** :
   l'appli interroge l'API décrite dans [docs/specification-bibliotheque.md](docs/specification-bibliotheque.md)
   (`https://www.stansgames.fr/jeux-tablette/api`) et conserve les contenus téléchargés sur l'appareil (IndexedDB).

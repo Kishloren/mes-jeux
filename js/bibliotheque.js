@@ -5,12 +5,12 @@
 
   const BASE = "https://www.stansgames.fr/jeux-tablette/api";
   const URL_INDEX = BASE + "/v1/bibliotheque";
-  const TYPES = { images: "mes-jeux-pack-images", "chasse-croise": "mes-jeux-carnet-cc" };
+  const TYPES = { images: "mes-jeux-pack-images", "chasse-croise": "mes-jeux-carnet-cc", "mots-codes": "mes-jeux-carnet-mc" };
 
   // ---------- IndexedDB ----------
   // elements : éléments installés { id, type, version, titre, description, octets, contenu: [ids] }
   // images   : { id, titre, credit, vignette: Blob, image: Blob, variante, elements: [ids] }
-  // grilles  : { id, grille (format interne du jeu), carnet, elements: [ids] }
+  // grilles  : { id, jeu ("cc" ou "mc"), grille (format interne du jeu), carnet, elements: [ids] }
   let dbPromesse = null;
   function db() {
     if (!dbPromesse) {
@@ -40,7 +40,7 @@
   });
 
   // ---------- État en mémoire (chargé au démarrage) ----------
-  const etat = { elements: [], photos: [], grilles: [] };
+  const etat = { elements: [], photos: [], grilles: [], motsCodes: [] };
   const urls = new Map(); // Blob -> URL d'objet, pour ne pas les recréer
 
   function urlDe(blob) {
@@ -65,7 +65,10 @@
       get image() { return urlDe(im.image); },
       get mini() { return urlDe(im.vignette); },
     }));
-    etat.grilles = grilles.sort((a, b) => rang(a) - rang(b)).map((g) => Object.assign({ carnet: g.carnet }, g.grille));
+    grilles.sort((a, b) => rang(a) - rang(b));
+    const enClair = (g) => Object.assign({ carnet: g.carnet }, g.grille);
+    etat.grilles = grilles.filter((g) => g.jeu !== "mc").map(enClair);
+    etat.motsCodes = grilles.filter((g) => g.jeu === "mc").map(enClair);
   }
 
   // ---------- Index du serveur ----------
@@ -167,12 +170,19 @@
         image: blobs[2 * i + 1],
         variante: varianteVoulue(im.variantes),
       }));
-    } else {
+    } else if (el.type === "chasse-croise") {
       progres(0, 1);
       nouveaux = m.grilles
         .map(versInterne)
         .filter((g) => window.ChasseCroise.valider(g).length === 0)
-        .map((g) => ({ id: g.id, grille: g, carnet: m.titre }));
+        .map((g) => ({ id: g.id, jeu: "cc", grille: g, carnet: m.titre }));
+      progres(1, 1);
+    } else {
+      progres(0, 1);
+      nouveaux = m.grilles
+        .map((g) => ({ id: g.id, nom: g.titre, niveau: g.niveau, lignes: g.lignes, codes: g.codes, devoiles: g.devoiles || [] }))
+        .filter((g) => window.MotsCodes.valider(g).length === 0)
+        .map((g) => ({ id: g.id, jeu: "mc", grille: g, carnet: m.titre }));
       progres(1, 1);
     }
     if (!nouveaux.length) throw new Error("aucun contenu valide");
@@ -228,5 +238,6 @@
     get elements() { return etat.elements; },
     get photos() { return etat.photos; },
     get grilles() { return etat.grilles; },
+    get motsCodes() { return etat.motsCodes; },
   };
 })();
