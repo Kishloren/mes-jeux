@@ -22,8 +22,8 @@ Tant que l'identifiant client n'est pas renseigné, le bouton « Google Photos �
 
 1. Puzzle → « Ajouter une photo » → « Google Photos ».
 2. Fenêtre de connexion Google : choisir le compte et accepter. Tant que l'appli n'est pas vérifiée par Google, un avertissement « Application non validée » s'affiche ; il faut passer par « Paramètres avancés → Accéder à Mes jeux ».
-3. Bouton « Ouvrir Google Photos » : Google Photos s'ouvre (l'appli Google Photos sur Android, ou un onglet). On choisit **une** photo, on valide, puis on revient dans Mes jeux.
-4. L'appli détecte le choix, télécharge la photo (2400 px au plus) et ouvre le recadrage.
+3. Bouton « Ouvrir Google Photos » : Google Photos s'ouvre (l'appli Google Photos sur Android, ou un onglet). On choisit une ou plusieurs photos (30 au plus), on valide, puis on revient dans Mes jeux.
+4. L'appli détecte le choix, télécharge les photos (2400 px au plus) et ouvre le recadrage de chacune, l'une après l'autre.
 
 L'autorisation Google dure une heure : au-delà, la fenêtre de connexion réapparaît (souvent sans rien à saisir).
 

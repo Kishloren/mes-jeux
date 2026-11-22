@@ -2,7 +2,7 @@
 (function () {
   "use strict";
 
-  const VERSION_APP = "20"; // à incrémenter avec VERSION dans sw.js
+  const VERSION_APP = "21"; // à incrémenter avec VERSION dans sw.js
 
   const Store = {
     get(cle, defaut) {
@@ -300,12 +300,13 @@
           <h1>Ajouter une photo</h1>
         </header>
         <div class="ajout">
-          <p class="ajout-texte">Où se trouve la photo ?</p>
+          <p class="ajout-texte">Où se trouvent les photos ?</p>
+          <p class="ajout-note">Vous pouvez en choisir plusieurs à la fois.</p>
           ${gp ? `<button class="btn btn-principal ajout-source" data-src="google">Google Photos</button>` : ""}
           <button class="btn ${gp ? "" : "btn-principal "}ajout-source" data-src="tablette">Photos de la tablette</button>
-          <input type="file" accept="image/*" hidden>
+          <input type="file" accept="image/*" multiple hidden>
           <div class="ajout-etat"></div>
-          <p class="ajout-note">La photo reste sur cette tablette : elle n'est envoyée nulle part.</p>
+          <p class="ajout-note">Les photos restent sur cette tablette : elles ne sont envoyées nulle part.</p>
         </div>
       </div>`;
     const ecran = app.firstElementChild;
@@ -317,76 +318,93 @@
     if (gp) window.GooglePhotos.preparer();
 
     fichier.addEventListener("change", () => {
-      const f = fichier.files[0];
-      if (f) preparer(f);
+      const liste = [...fichier.files];
+      if (liste.length) { etat.innerHTML = `<p>Ouverture des photos…</p>`; recadrerSuite(liste, 0, 0); }
     });
     ecran.querySelectorAll("[data-src]").forEach((b) => b.addEventListener("click", async () => {
       if (b.dataset.src === "tablette") { fichier.value = ""; fichier.click(); return; }
       abandon = false;
       etat.innerHTML = `<p>Connexion à Google…</p>`;
       try {
-        const blob = await window.GooglePhotos.choisirPhoto({
+        const blobs = await window.GooglePhotos.choisirPhotos({
           pret: (url) => {
             if (!ici()) return;
             etat.innerHTML = `
-              <p>Touchez « Ouvrir Google Photos », choisissez une photo, puis revenez ici.</p>
+              <p>Touchez « Ouvrir Google Photos », choisissez une ou plusieurs photos, puis revenez ici.</p>
               <a class="btn btn-principal" href="${echap(url)}" target="_blank" rel="noopener">Ouvrir Google Photos</a>
               <button class="btn btn-discret" data-annuler>Annuler</button>`;
             etat.querySelector("[data-annuler]").addEventListener("click", () => { abandon = true; etat.innerHTML = ""; });
           },
+          telechargement: (fait, total) => { if (ici()) etat.innerHTML = `<p>Téléchargement des photos… ${fait} sur ${total}</p>`; },
           annule: () => abandon || !ici(),
         });
         if (!ici()) return;
-        if (!blob) { etat.innerHTML = ""; return; }
-        preparer(blob);
+        if (!blobs || !blobs.length) { etat.innerHTML = ""; return; }
+        recadrerSuite(blobs, 0, 0);
       } catch (e) {
         if (!ici()) return;
         etat.innerHTML = "";
         toast("Google Photos n'a pas répondu. Vérifiez la connexion et réessayez.", 5000);
       }
     }));
+  }
 
-    async function preparer(blob) {
-      etat.innerHTML = `<p>Ouverture de la photo…</p>`;
-      let bmp;
-      try {
-        bmp = await createImageBitmap(blob, { imageOrientation: "from-image" });
-        // Les très grandes photos sont réduites (mémoire de la tablette).
-        const k = 3000 / Math.max(bmp.width, bmp.height);
-        if (k < 1) {
-          const petit = await createImageBitmap(bmp, { resizeWidth: Math.round(bmp.width * k), resizeHeight: Math.round(bmp.height * k), resizeQuality: "high" });
-          bmp.close();
-          bmp = petit;
-        }
-      } catch (e) {
-        if (ici()) { etat.innerHTML = ""; toast("Cette photo ne peut pas être ouverte.", 5000); }
-        return;
+  async function ouvrirPhoto(blob) {
+    try {
+      let bmp = await createImageBitmap(blob, { imageOrientation: "from-image" });
+      // Les très grandes photos sont réduites (mémoire de la tablette).
+      const k = 3000 / Math.max(bmp.width, bmp.height);
+      if (k < 1) {
+        const petit = await createImageBitmap(bmp, { resizeWidth: Math.round(bmp.width * k), resizeHeight: Math.round(bmp.height * k), resizeQuality: "high" });
+        bmp.close();
+        bmp = petit;
       }
-      if (!ici()) { bmp.close(); return; }
-      recadrer(bmp);
+      return bmp;
+    } catch (e) {
+      return null;
     }
   }
 
-  // Le recadrage s'affiche sans changer d'adresse : « Annuler » revient au choix de la source.
-  function recadrer(bmp) {
+  // Recadre les photos choisies l'une après l'autre (on peut en choisir plusieurs d'un coup,
+  // pour ne pas revenir sans cesse dans la galerie). `ajoutees` : photos déjà enregistrées.
+  // Le recadrage s'affiche sans changer d'adresse.
+  async function recadrerSuite(liste, i, ajoutees) {
+    if (i >= liste.length) {
+      if (ajoutees) {
+        toast(ajoutees > 1 ? `${ajoutees} photos ajoutées.` : "Photo ajoutée.");
+        location.hash = "#/puzzle";
+      } else ecranAjoutPhoto();
+      return;
+    }
+    const avant = app.firstElementChild;
+    const bmp = await ouvrirPhoto(liste[i]);
+    if (app.firstElementChild !== avant) { if (bmp) bmp.close(); return; } // l'utilisateur est parti
+    if (!bmp) {
+      toast("Une photo n'a pas pu être ouverte.", 4000);
+      recadrerSuite(liste, i + 1, ajoutees);
+      return;
+    }
     vider();
+    const plusieurs = liste.length > 1;
     document.title = "Recadrer la photo";
     const fin = window.Recadrage.ouvrir(app, bmp, {
       ratio: 2 / 3,
-      titre: "Recadrer",
-      surAnnuler: () => ecranAjoutPhoto(),
+      titre: plusieurs ? `Photo ${i + 1} sur ${liste.length}` : "Recadrer",
+      annuler: plusieurs ? "Passer" : "Annuler",
+      surAnnuler: () => recadrerSuite(liste, i + 1, ajoutees),
       surValider: async (rect) => {
+        let ok = false;
         try {
           const cible = window.Bibliotheque.varianteVoulue({ standard: { largeur: 1000 } }) === "standard" ? 1000 : 1600;
           const l = Math.max(640, Math.min(cible, rect.w));
           const image = await encoder(bmp, rect, l, Math.round(l * 1.5), 0.86);
           const vignette = await encoder(bmp, rect, 320, 480, 0.8);
           await window.Bibliotheque.ajouterPhoto({ image, vignette });
-          toast("Photo ajoutée.");
+          ok = true;
         } catch (e) {
           toast("La photo n'a pas pu être enregistrée.", 5000);
         }
-        location.hash = "#/puzzle";
+        recadrerSuite(liste, i + 1, ajoutees + (ok ? 1 : 0));
       },
     });
     nettoyage = () => { fin(); bmp.close(); };

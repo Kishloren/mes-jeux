@@ -65,11 +65,12 @@
   //   etapes.pret(urlGooglePhotos) : la session est créée, il faut ouvrir Google Photos
   //   (l'appelant affiche un lien, que l'utilisateur touche lui-même) ;
   //   etapes.annule() : renvoie true si l'utilisateur a abandonné.
-  // Renvoie un Blob (la photo, sans ses métadonnées de lieu), ou null si abandon.
-  async function choisirPhoto(etapes) {
+  //   etapes.telechargement(fait, total) : avancement du téléchargement.
+  // Renvoie la liste des photos choisies (Blobs), ou null si abandon.
+  async function choisirPhotos(etapes) {
     await chargerGIS();
     await connecter();
-    const session = await appel("POST", "/sessions", { pickingConfig: { maxItemCount: "1" } });
+    const session = await appel("POST", "/sessions", { pickingConfig: { maxItemCount: "30" } });
     try {
       etapes.pret(session.pickerUri + "/autoclose");
       let s = session;
@@ -81,13 +82,24 @@
         s = await appel("GET", "/sessions/" + encodeURIComponent(session.id));
         if (s.pollingConfig && s.pollingConfig.timeoutIn === "0s" && !s.mediaItemsSet) return null;
       }
-      const liste = await appel("GET", "/mediaItems?pageSize=10&sessionId=" + encodeURIComponent(session.id));
-      const item = (liste.mediaItems || []).find((m) => m.type === "PHOTO" || /^image\//.test(m.mediaFile && m.mediaFile.mimeType));
-      if (!item) throw new Error("pas de photo");
-      // Taille demandée : assez pour le recadrage (2400 px de haut au maximum).
-      const rep = await fetch(item.mediaFile.baseUrl + "=w2400-h2400", { headers: { Authorization: "Bearer " + jeton.valeur } });
-      if (!rep.ok) throw new Error("HTTP " + rep.status);
-      return await rep.blob();
+      const items = [];
+      let page = "";
+      do {
+        const liste = await appel("GET", "/mediaItems?pageSize=100&sessionId=" + encodeURIComponent(session.id) + (page ? "&pageToken=" + encodeURIComponent(page) : ""));
+        items.push(...(liste.mediaItems || []).filter((m) => m.type === "PHOTO" || /^image\//.test(m.mediaFile && m.mediaFile.mimeType)));
+        page = liste.nextPageToken;
+      } while (page);
+      if (!items.length) throw new Error("pas de photo");
+      const blobs = [];
+      for (const item of items) {
+        if (etapes.annule()) return null;
+        if (etapes.telechargement) etapes.telechargement(blobs.length + 1, items.length);
+        // Taille demandée : assez pour le recadrage (2400 px au maximum).
+        const rep = await fetch(item.mediaFile.baseUrl + "=w2400-h2400", { headers: { Authorization: "Bearer " + jeton.valeur } });
+        if (!rep.ok) throw new Error("HTTP " + rep.status);
+        blobs.push(await rep.blob());
+      }
+      return blobs;
     } finally {
       appel("DELETE", "/sessions/" + encodeURIComponent(session.id)).catch(() => {});
     }
@@ -98,6 +110,6 @@
     // Charge à l'avance la bibliothèque de connexion Google, pour que la fenêtre de
     // connexion s'ouvre bien au toucher du bouton.
     preparer() { chargerGIS().catch(() => {}); },
-    choisirPhoto,
+    choisirPhotos,
   };
 })();

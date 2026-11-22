@@ -16,7 +16,7 @@
     racine.innerHTML = `
       <div class="rc">
         <header class="barre">
-          <button class="btn" data-act="annuler">Annuler</button>
+          <button class="btn" data-act="annuler">${UI.echap(opts.annuler || "Annuler")}</button>
           <h1>${UI.echap(opts.titre || "Recadrer")}</h1>
           <span class="espace"></span>
           <button class="btn btn-principal rc-ok" data-act="valider">Valider ✓</button>
