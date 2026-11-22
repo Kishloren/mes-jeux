@@ -1,0 +1,695 @@
+{
+  "format": "mes-jeux-carnet-cc",
+  "version_format": 1,
+  "id": "carnet-exemple-01",
+  "version": 1,
+  "titre": "Grilles d'exemple",
+  "grilles": [
+    {
+      "id": "cc-hugo-demain-01",
+      "titre": "Grille 4",
+      "niveau": 2,
+      "colonnes": 17,
+      "consigne": "La colonne encadrée de bleu donne le nom de l'auteur et le titre du recueil dont est tiré l'extrait.",
+      "citation": "Demain, dès l'aube, à l'heure où blanchit la campagne, / Je partirai. Vois-tu, je sais que tu m'attends. / J'irai par la forêt, j'irai par la montagne. / Je ne puis demeurer loin de toi plus longtemps.",
+      "auteur": "Victor Hugo",
+      "oeuvre": "Les Contemplations",
+      "source": {
+        "annee": 1856,
+        "domaine_public": true
+      },
+      "acrostiche": 0,
+      "acrostiche_texte": "HUGOLESCONTEMPLATIONS",
+      "definitions": [
+        {
+          "lettre": "A",
+          "intitule": "Élevées",
+          "reponse": "HAUTES",
+          "cases": [
+            29,
+            26,
+            115,
+            72,
+            113,
+            147
+          ]
+        },
+        {
+          "lettre": "B",
+          "intitule": "Association, alliance",
+          "reponse": "UNION",
+          "cases": [
+            12,
+            141,
+            128,
+            103,
+            6
+          ]
+        },
+        {
+          "lettre": "C",
+          "intitule": "Militaires galonnés",
+          "reponse": "GRADES",
+          "cases": [
+            39,
+            123,
+            95,
+            130,
+            43,
+            63
+          ]
+        },
+        {
+          "lettre": "D",
+          "intitule": "Oubliés, laissés de côté",
+          "reponse": "OMIS",
+          "cases": [
+            53,
+            145,
+            62,
+            76
+          ]
+        },
+        {
+          "lettre": "E",
+          "intitule": "Morceau d'étoffe déchiré",
+          "reponse": "LAMBEAU",
+          "cases": [
+            139,
+            98,
+            36,
+            13,
+            41,
+            15,
+            19
+          ]
+        },
+        {
+          "lettre": "F",
+          "intitule": "Auteurs de livres",
+          "reponse": "ECRIVAINS",
+          "cases": [
+            111,
+            34,
+            125,
+            81,
+            52,
+            101,
+            78,
+            129,
+            138
+          ]
+        },
+        {
+          "lettre": "G",
+          "intitule": "Temps passé en un lieu",
+          "reponse": "SEJOUR",
+          "cases": [
+            9,
+            73,
+            42,
+            127,
+            23,
+            94
+          ]
+        },
+        {
+          "lettre": "H",
+          "intitule": "Propre au mariage",
+          "reponse": "CONJUGALE",
+          "cases": [
+            28,
+            88,
+            74,
+            58,
+            65,
+            107,
+            35,
+            136,
+            144
+          ]
+        },
+        {
+          "lettre": "I",
+          "intitule": "Tendance à voir le bon côté des choses",
+          "reponse": "OPTIMISME",
+          "cases": [
+            22,
+            44,
+            67,
+            5,
+            69,
+            30,
+            117,
+            102,
+            131
+          ]
+        },
+        {
+          "lettre": "J",
+          "intitule": "Protège les lainages des mites",
+          "reponse": "NAPHTALINE",
+          "cases": [
+            108,
+            86,
+            97,
+            17,
+            132,
+            83,
+            25,
+            134,
+            27,
+            124
+          ]
+        },
+        {
+          "lettre": "K",
+          "intitule": "Qui vient tard",
+          "reponse": "TARDIF",
+          "cases": [
+            47,
+            106,
+            84,
+            118,
+            96,
+            87
+          ]
+        },
+        {
+          "lettre": "L",
+          "intitule": "Marque de considération",
+          "reponse": "EGARD",
+          "cases": [
+            8,
+            142,
+            33,
+            49,
+            1
+          ]
+        },
+        {
+          "lettre": "M",
+          "intitule": "Le plus grand nombre",
+          "reponse": "MAJORITE",
+          "cases": [
+            120,
+            70,
+            77,
+            133,
+            79,
+            48,
+            31,
+            109
+          ]
+        },
+        {
+          "lettre": "N",
+          "intitule": "Feuilles rigides de métal ou de verre",
+          "reponse": "PLAQUES",
+          "cases": [
+            146,
+            10,
+            38,
+            64,
+            122,
+            59,
+            55
+          ]
+        },
+        {
+          "lettre": "O",
+          "intitule": "Il éclaire la rue la nuit",
+          "reponse": "LAMPADAIRE",
+          "cases": [
+            100,
+            80,
+            3,
+            135,
+            50,
+            75,
+            61,
+            51,
+            89,
+            18
+          ]
+        },
+        {
+          "lettre": "P",
+          "intitule": "Ajuster, accommoder",
+          "reponse": "ADAPTER",
+          "cases": [
+            45,
+            7,
+            11,
+            37,
+            91,
+            119,
+            46
+          ]
+        },
+        {
+          "lettre": "Q",
+          "intitule": "Arbre dont la fleur donne une tisane",
+          "reponse": "TILLEUL",
+          "cases": [
+            71,
+            116,
+            85,
+            32,
+            90,
+            137,
+            126
+          ]
+        },
+        {
+          "lettre": "R",
+          "intitule": "Insulte",
+          "reponse": "INJURE",
+          "cases": [
+            54,
+            112,
+            92,
+            57,
+            20,
+            14
+          ]
+        },
+        {
+          "lettre": "S",
+          "intitule": "Chose",
+          "reponse": "OBJET",
+          "cases": [
+            140,
+            24,
+            110,
+            21,
+            56
+          ]
+        },
+        {
+          "lettre": "T",
+          "intitule": "Relative aux noces",
+          "reponse": "NUPTIALE",
+          "cases": [
+            104,
+            68,
+            114,
+            143,
+            93,
+            4,
+            16,
+            2
+          ]
+        },
+        {
+          "lettre": "U",
+          "intitule": "Reptile sans pattes",
+          "reponse": "SERPENT",
+          "cases": [
+            60,
+            121,
+            99,
+            82,
+            66,
+            40,
+            105
+          ]
+        }
+      ]
+    },
+    {
+      "id": "cc-daudet-chevre-01",
+      "titre": "Grille 5",
+      "niveau": 2,
+      "colonnes": 20,
+      "consigne": "La colonne encadrée de bleu donne le nom de l'auteur et le titre du conte dont est tiré l'extrait (« monsieur » y est abrégé en M).",
+      "citation": "Ah ! Gringoire, qu'elle était jolie la petite chèvre de M. Seguin ! qu'elle était jolie avec ses yeux doux, sa barbiche de sous-officier, ses sabots noirs et luisants, ses cornes zébrées et ses longs poils blancs qui lui faisaient une houppelande !",
+      "auteur": "Alphonse Daudet",
+      "oeuvre": "La chèvre de monsieur Seguin (Lettres de mon moulin)",
+      "source": {
+        "annee": 1869,
+        "domaine_public": true
+      },
+      "acrostiche": 0,
+      "acrostiche_texte": "DAUDETLACHEVREDEMSEGUIN",
+      "definitions": [
+        {
+          "lettre": "A",
+          "intitule": "A pris le repas de midi",
+          "reponse": "DEJEUNE",
+          "cases": [
+            42,
+            93,
+            62,
+            66,
+            52,
+            127,
+            143
+          ]
+        },
+        {
+          "lettre": "B",
+          "intitule": "Aimable, d'un abord facile",
+          "reponse": "AFFABLE",
+          "cases": [
+            163,
+            173,
+            100,
+            85,
+            161,
+            122,
+            184
+          ]
+        },
+        {
+          "lettre": "C",
+          "intitule": "Accord de voix qui chantent la même note",
+          "reponse": "UNISSON",
+          "cases": [
+            48,
+            115,
+            169,
+            125,
+            119,
+            24,
+            50
+          ]
+        },
+        {
+          "lettre": "D",
+          "intitule": "Enclins, prêts à",
+          "reponse": "DISPOSES",
+          "cases": [
+            78,
+            101,
+            94,
+            189,
+            116,
+            132,
+            190,
+            106
+          ]
+        },
+        {
+          "lettre": "E",
+          "intitule": "Demandes impérieuses",
+          "reponse": "EXIGENCES",
+          "cases": [
+            57,
+            81,
+            124,
+            47,
+            38,
+            183,
+            165,
+            56,
+            129
+          ]
+        },
+        {
+          "lettre": "F",
+          "intitule": "Qui vient tard",
+          "reponse": "TARDIVE",
+          "cases": [
+            61,
+            67,
+            142,
+            92,
+            158,
+            39,
+            14
+          ]
+        },
+        {
+          "lettre": "G",
+          "intitule": "Lieu d'expériences scientifiques",
+          "reponse": "LABORATOIRE",
+          "cases": [
+            159,
+            29,
+            111,
+            186,
+            86,
+            20,
+            34,
+            98,
+            49,
+            4,
+            144
+          ]
+        },
+        {
+          "lettre": "H",
+          "intitule": "Achat",
+          "reponse": "ACQUISITION",
+          "cases": [
+            174,
+            36,
+            12,
+            187,
+            103,
+            97,
+            65,
+            128,
+            175,
+            95,
+            153
+          ]
+        },
+        {
+          "lettre": "I",
+          "intitule": "Suite de phénomènes qui se répètent",
+          "reponse": "CYCLE",
+          "cases": [
+            133,
+            74,
+            89,
+            162,
+            46
+          ]
+        },
+        {
+          "lettre": "J",
+          "intitule": "Couchées à plat",
+          "reponse": "HORIZONTALES",
+          "cases": [
+            90,
+            152,
+            118,
+            5,
+            139,
+            79,
+            193,
+            19,
+            83,
+            64,
+            75,
+            166
+          ]
+        },
+        {
+          "lettre": "K",
+          "intitule": "Baigné de soleil",
+          "reponse": "ENSOLEILLE",
+          "cases": [
+            18,
+            136,
+            145,
+            63,
+            55,
+            137,
+            9,
+            25,
+            151,
+            131
+          ]
+        },
+        {
+          "lettre": "L",
+          "intitule": "Gluant, poisseux",
+          "reponse": "VISQUEUX",
+          "cases": [
+            68,
+            117,
+            82,
+            51,
+            168,
+            31,
+            80,
+            77
+          ]
+        },
+        {
+          "lettre": "M",
+          "intitule": "Ajouter encore",
+          "reponse": "RAJOUTER",
+          "cases": [
+            40,
+            192,
+            23,
+            134,
+            13,
+            181,
+            107,
+            135
+          ]
+        },
+        {
+          "lettre": "N",
+          "intitule": "Contraire de minces",
+          "reponse": "EPAISSES",
+          "cases": [
+            120,
+            30,
+            1,
+            178,
+            73,
+            138,
+            91,
+            155
+          ]
+        },
+        {
+          "lettre": "O",
+          "intitule": "Revers militaires",
+          "reponse": "DEFAITES",
+          "cases": [
+            194,
+            41,
+            99,
+            59,
+            21,
+            113,
+            53,
+            114
+          ]
+        },
+        {
+          "lettre": "P",
+          "intitule": "Pour monter sur le toit",
+          "reponse": "ECHELLE",
+          "cases": [
+            17,
+            70,
+            37,
+            72,
+            170,
+            54,
+            140
+          ]
+        },
+        {
+          "lettre": "Q",
+          "intitule": "Digne d'un maître",
+          "reponse": "MAGISTRAL",
+          "cases": [
+            44,
+            177,
+            3,
+            88,
+            148,
+            58,
+            105,
+            110,
+            191
+          ]
+        },
+        {
+          "lettre": "R",
+          "intitule": "Prompts à se vexer",
+          "reponse": "SUSCEPTIBLES",
+          "cases": [
+            130,
+            123,
+            71,
+            102,
+            35,
+            156,
+            22,
+            26,
+            87,
+            16,
+            179,
+            160
+          ]
+        },
+        {
+          "lettre": "S",
+          "intitule": "Femmes mariées",
+          "reponse": "EPOUSES",
+          "cases": [
+            195,
+            188,
+            8,
+            171,
+            150,
+            27,
+            176
+          ]
+        },
+        {
+          "lettre": "T",
+          "intitule": "Comme les cathédrales de Chartres et de Reims",
+          "reponse": "GOTHIQUES",
+          "cases": [
+            154,
+            112,
+            147,
+            185,
+            60,
+            167,
+            182,
+            43,
+            108
+          ]
+        },
+        {
+          "lettre": "U",
+          "intitule": "Qui ne peut attendre",
+          "reponse": "URGENTE",
+          "cases": [
+            96,
+            10,
+            7,
+            104,
+            180,
+            121,
+            69
+          ]
+        },
+        {
+          "lettre": "V",
+          "intitule": "Qui sort de l'ordinaire",
+          "reponse": "INHABITUEL",
+          "cases": [
+            33,
+            164,
+            2,
+            126,
+            141,
+            172,
+            32,
+            76,
+            149,
+            15
+          ]
+        },
+        {
+          "lettre": "W",
+          "intitule": "Aristocratie",
+          "reponse": "NOBLESSE",
+          "cases": [
+            6,
+            157,
+            84,
+            28,
+            11,
+            109,
+            45,
+            146
+          ]
+        }
+      ]
+    }
+  ]
+}
