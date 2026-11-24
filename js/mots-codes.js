@@ -71,7 +71,8 @@
 
   function reinitialiser(g) { UI.Store.del(cle(g)); }
 
-  function ouvrir(racine, g) {
+  // base : adresse de la liste des grilles (le carnet).
+  function ouvrir(racine, g, base = "#/mots-codes") {
     const A = analyser(g);
     const { R, C, n, lettre, cases } = A;
     const st = charger(g, A);
@@ -84,7 +85,7 @@
     racine.innerHTML = `
       <div class="mc">
         <header class="barre">
-          <a class="btn btn-retour" href="#/mots-codes">← Retour</a>
+          <a class="btn btn-retour" href="${base}">← Retour</a>
           <h1>${UI.echap(g.nom)}</h1>
           <span class="espace"></span>
           <button class="btn" data-act="verifier">Vérifier</button>
@@ -279,7 +280,7 @@
           boutons: [
             { label: "Rester sur la grille" },
             { label: "↺ Recommencer la grille", action: demanderRecommencer },
-            { label: "Retour aux grilles", classe: "btn-principal", action: () => { location.hash = "#/mots-codes"; } },
+            { label: "Retour aux grilles", classe: "btn-principal", action: () => { location.hash = base; } },
           ],
         });
       }

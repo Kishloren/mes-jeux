@@ -79,5 +79,52 @@
     return blob;
   }
 
-  window.Couverture = { generer, couper };
+  // Couverture d'un carnet de grilles fabriquée par l'appli (grilles intégrées, ou carnet
+  // téléchargé sans couverture), dans l'esprit de celles du catalogue : carte claire sur
+  // fond bleu nuit, nom du jeu, titre du carnet, motif, nombre de grilles.
+  async function carnet(jeu, titre, nombre, motif) {
+    await chargerPolice();
+    const c = document.createElement("canvas");
+    c.width = L; c.height = H;
+    const ctx = c.getContext("2d");
+    ctx.fillStyle = "#1B324B";
+    ctx.fillRect(0, 0, L, H);
+    const rect = (x, y, w, h, r) => {
+      ctx.beginPath();
+      ctx.moveTo(x + r, y); ctx.arcTo(x + w, y, x + w, y + h, r); ctx.arcTo(x + w, y + h, x, y + h, r);
+      ctx.arcTo(x, y + h, x, y, r); ctx.arcTo(x, y, x + w, y, r); ctx.closePath();
+    };
+    ctx.fillStyle = "#F5EAD8";
+    rect(38, 38, 404, 644, 22); ctx.fill();
+    ctx.textAlign = "center";
+    const police = (t) => `bold ${t}px "${POLICE}", "DejaVu Serif", Georgia, serif`;
+    // Nom du jeu, en capitales, réduit si besoin pour tenir dans la carte.
+    let t = 40;
+    ctx.font = police(t);
+    while (ctx.measureText(jeu.toUpperCase()).width > 360 && t > 22) ctx.font = police(t -= 2);
+    ctx.fillStyle = "#1B324B";
+    ctx.fillText(jeu.toUpperCase(), L / 2, 152);
+    ctx.font = police(30);
+    ctx.fillStyle = "#8A3D24";
+    const { lignes } = couper(titre);
+    lignes.slice(0, 2).forEach((l, i) => ctx.fillText(l, L / 2, 228 + i * 38, 380));
+    // Motif
+    const carre = (x, y, s, plein) => {
+      rect(x, y, s, s, 5);
+      ctx.fillStyle = plein ? "#1B324B" : "#FFFDF8"; ctx.fill();
+      if (!plein) { ctx.strokeStyle = "#C8843F"; ctx.lineWidth = 2; ctx.stroke(); }
+    };
+    if (motif === "mc") {
+      for (let i = 0; i < 5; i++) for (let j = 0; j < 5; j++) carre(130 + j * 46, 300 + i * 46, 40, i === j);
+    } else {
+      ctx.fillStyle = "#C8843F";
+      for (let j = 0; j < 5; j++) { rect(88 + j * 62, 380, 48, 48, 5); ctx.fill(); }
+    }
+    ctx.font = `24px "DejaVu Sans", Verdana, sans-serif`;
+    ctx.fillStyle = "#1B324B";
+    ctx.fillText(`${nombre} grille${nombre > 1 ? "s" : ""}`, L / 2, 600);
+    return new Promise((ok) => c.toBlob(ok, "image/webp", 0.85));
+  }
+
+  window.Couverture = { generer, couper, carnet };
 })();

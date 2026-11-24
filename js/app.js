@@ -2,7 +2,7 @@
 (function () {
   "use strict";
 
-  const VERSION_APP = "24"; // à incrémenter avec VERSION dans sw.js
+  const VERSION_APP = "25"; // à incrémenter avec VERSION dans sw.js
 
   const Store = {
     get(cle, defaut) {
@@ -77,9 +77,7 @@
   }
 
   // Toutes les grilles : celles livrées avec l'appli puis celles de la Bibliothèque.
-  const grilles = () => [...window.CC_GRILLES, ...window.Bibliotheque.grilles];
   const photos = () => window.Bibliotheque.photos;
-  const grillesMC = () => [...window.MC_GRILLES, ...window.Bibliotheque.motsCodes];
 
   function ecranPortail() {
     vider();
@@ -111,138 +109,197 @@
             <span class="tuile-icone ${p ? "tuile-puzzle" : ""}" aria-hidden="true">${icPuzzle}</span>
             <span class="tuile-nom">Puzzle</span>
           </a>
-          <a class="tuile tuile-biblio" href="#/bibliotheque">
-            <span class="tuile-livres" aria-hidden="true"><span></span><span></span><span></span><span></span></span>
-            <span class="tuile-nom">Bibliothèque</span>
-          </a>
         </div>
         <p class="version">version ${VERSION_APP}</p>
       </div>`;
   }
 
-  function ecranListeCC() {
-    vider();
-    document.title = "Chassé-croisé";
-    const carte = (g) => {
-      const p = window.ChasseCroise.progression(g);
-      let etat, classe = "";
-      if (p.fini) { etat = "Terminée ✓"; classe = "finie"; }
-      else if (p.remplies === 0) etat = "Pas encore commencée";
-      else etat = `En cours : ${Math.round((100 * p.remplies) / p.total)} %`;
-      const sous = p.fini ? `<span class="carte-sous">${echap(g.auteur)} — <i>${echap(g.oeuvre)}</i></span>` : "";
-      const raz = p.remplies ? `<button class="btn btn-raz" data-raz="${echap(g.id)}">↺ Recommencer cette grille</button>` : "";
-      return `
-        <div class="carte-bloc">
-          <a class="carte ${classe}" href="#/chasse-croise/${encodeURIComponent(g.id)}">
+  // ---------- Accueil d'un jeu : les packs présents sur la tablette ----------
+  // Tuiles de couverture (un tiers de la largeur), communes au Puzzle et aux jeux de grilles.
+  // items : [{ href, titre, couverture (URL ou null), etat, fini, cle }]
+  function tuilesPacks(items) {
+    return items.map((it) => `<a class="pz-pack${it.fini ? " fini" : ""}" href="${it.href}" aria-label="${echap(it.titre)}">
+          <span class="pz-pack-couv" data-couv="${echap(it.cle || "")}">${it.couverture
+            ? `<img src="${it.couverture}" alt="">` : `<span class="pz-pack-sans">${echap(it.titre)}</span>`}</span>
+          <span class="pz-pack-etat">${it.fini ? "✓ " : ""}${it.etat}</span>
+        </a>`).join("");
+  }
+
+  function pageAccueilJeu({ titre, plus, consigne, items, vide }) {
+    app.innerHTML = `
+      <div class="page">
+        <header class="barre">
+          <a class="btn btn-retour" href="#/">← Accueil</a>
+          <h1>${echap(titre)}</h1>
+          <span class="espace"></span>
+          <a class="btn btn-plus" href="${plus}" aria-label="Ajouter des packs">＋</a>
+        </header>
+        ${items.length ? `<p class="pz-consigne">${consigne}</p><div class="pz-packs">${tuilesPacks(items)}</div>`
+          : `<div class="vide"><p>${vide}</p><a class="btn btn-principal" href="${plus}">＋ Ajouter des packs</a></div>`}
+      </div>`;
+  }
+
+  // ---------- Jeux de grilles : chassé-croisé, mots codés ----------
+  const INTEGRES = "grilles-offertes";
+  const JEUX = {
+    "chasse-croise": {
+      nom: "Chassé-croisé",
+      motif: "cc",
+      integrees: () => window.CC_GRILLES,
+      module: () => window.ChasseCroise,
+      fini: (g) => window.ChasseCroise.progression(g).fini,
+      carte(g, href) {
+        const p = window.ChasseCroise.progression(g);
+        let etat, classe = "";
+        if (p.fini) { etat = "Terminée ✓"; classe = "finie"; }
+        else if (p.remplies === 0) etat = "Pas encore commencée";
+        else etat = `En cours : ${Math.round((100 * p.remplies) / p.total)} %`;
+        const sous = p.fini && g.auteur ? `<span class="carte-sous">${echap(g.auteur)}${g.oeuvre ? ` — <i>${echap(g.oeuvre)}</i>` : ""}</span>` : "";
+        return { html: `<a class="carte ${classe}" href="${href}">
             <span class="carte-nom">${echap(g.nom)}</span>
             <span class="carte-etat">${etat}</span>
             <span class="barre-prog"><span style="width:${(100 * p.remplies) / p.total}%"></span></span>
             ${sous}
-          </a>
-          ${raz}
-        </div>`;
-    };
-    // Regroupement par carnet, dans l'ordre d'apparition.
-    const carnets = new Map();
-    grilles().forEach((g) => {
-      const c = g.carnet || "Grilles";
-      if (!carnets.has(c)) carnets.set(c, []);
-      carnets.get(c).push(g);
-    });
-    const sections = [...carnets].map(([nom, gs]) => `
-        <h2 class="section-titre">${echap(nom)}</h2>
-        <div class="cartes">${gs.map(carte).join("")}</div>`).join("");
-    app.innerHTML = `
-      <div class="page">
-        <header class="barre">
-          <a class="btn btn-retour" href="#/">← Accueil</a>
-          <h1>Chassé-croisé</h1>
-        </header>
-        ${sections}
-        <p class="vers-biblio">D'autres grilles sont disponibles dans la <a href="#/bibliotheque">Bibliothèque</a>.</p>
-      </div>`;
-    app.querySelectorAll("[data-raz]").forEach((b) => b.addEventListener("click", () => {
-      const g = grilles().find((x) => x.id === b.dataset.raz);
-      modal({
-        titre: `Recommencer « ${echap(g.nom)} » ?`,
-        html: "<p>Toutes les lettres de cette grille seront effacées.</p>",
-        boutons: [
-          { label: "Non, garder" },
-          { label: "Oui, recommencer", classe: "btn-danger", action: () => { window.ChasseCroise.reinitialiser(g); ecranListeCC(); } },
-        ],
-      });
-    }));
-  }
-
-  function ecranJeuCC(id) {
-    const g = grilles().find((x) => x.id === id);
-    if (!g) { location.hash = "#/chasse-croise"; return; }
-    vider();
-    document.title = "Chassé-croisé — " + g.nom;
-    nettoyage = window.ChasseCroise.ouvrir(app, g);
-  }
-
-  function ecranListeMC() {
-    vider();
-    document.title = "Mots codés";
-    const carte = (g) => {
-      const p = window.MotsCodes.progression(g);
-      let etat, classe = "";
-      if (p.fini) { etat = "Terminée ✓"; classe = "finie"; }
-      else etat = `${p.trouves} lettres sur ${p.total}`;
-      const raz = p.fini || p.trouves > g.devoiles.length
-        ? `<button class="btn btn-raz" data-raz="${echap(g.id)}">↺ Recommencer cette grille</button>` : "";
-      return `
-        <div class="carte-bloc">
-          <a class="carte ${classe}" href="#/mots-codes/${encodeURIComponent(g.id)}">
+          </a>`, entamee: p.remplies > 0 };
+      },
+      raz: "Toutes les lettres de cette grille seront effacées.",
+    },
+    "mots-codes": {
+      nom: "Mots codés",
+      motif: "mc",
+      integrees: () => window.MC_GRILLES,
+      module: () => window.MotsCodes,
+      fini: (g) => window.MotsCodes.progression(g).fini,
+      carte(g, href) {
+        const p = window.MotsCodes.progression(g);
+        let etat, classe = "";
+        if (p.fini) { etat = "Terminée ✓"; classe = "finie"; }
+        else etat = `${p.trouves} lettres sur ${p.total}`;
+        return { html: `<a class="carte ${classe}" href="${href}">
             <span class="carte-nom">${echap(g.nom)}</span>
             <span class="carte-etat">${etat}</span>
             <span class="barre-prog"><span style="width:${(100 * p.trouves) / p.total}%"></span></span>
-          </a>
-          ${raz}
-        </div>`;
-    };
-    const carnets = new Map();
-    grillesMC().forEach((g) => {
-      const c = g.carnet || "Grilles";
-      if (!carnets.has(c)) carnets.set(c, []);
-      carnets.get(c).push(g);
+          </a>`, entamee: p.fini || p.trouves > g.devoiles.length };
+      },
+      raz: "Toutes les lettres trouvées dans cette grille seront effacées.",
+    },
+  };
+  const lienJeu = (type, ...ids) => "#/" + [type, ...ids.map(encodeURIComponent)].join("/");
+
+  // Packs d'un jeu : les grilles livrées avec l'appli, puis les carnets téléchargés.
+  function packsJeu(type) {
+    const integ = JEUX[type].integrees();
+    return (integ.length ? [{ id: INTEGRES, titre: "Grilles offertes", integre: true, grilles: integ, couverture: null }] : [])
+      .concat(window.Bibliotheque.packs.filter((pk) => pk.type === type && !pk.archive && pk.grilles.length));
+  }
+
+  // Couvertures fabriquées par l'appli (grilles intégrées, carnet sans couverture).
+  const couvFabriquees = new Map();
+  function completerCouvertures(type, liste) {
+    liste.filter((pk) => !pk.couverture).forEach((pk) => {
+      const cle = type + "|" + pk.id + "|" + pk.grilles.length;
+      const poser = (url) => {
+        const el = app.querySelector(`[data-couv="${CSS.escape(cle)}"]`);
+        if (el && url) el.innerHTML = `<img src="${url}" alt="">`;
+      };
+      if (couvFabriquees.has(cle)) { couvFabriquees.get(cle).then(poser); return; }
+      const pr = window.Couverture.carnet(JEUX[type].nom, pk.titre, pk.grilles.length, JEUX[type].motif)
+        .then((b) => (b ? URL.createObjectURL(b) : null)).catch(() => null);
+      couvFabriquees.set(cle, pr);
+      pr.then(poser);
     });
-    const sections = [...carnets].map(([nom, gs]) => `
-        <h2 class="section-titre">${echap(nom)}</h2>
-        <div class="cartes">${gs.map(carte).join("")}</div>`).join("");
+  }
+
+  function ecranAccueilJeu(type) {
+    const J = JEUX[type];
+    vider();
+    document.title = J.nom;
+    const liste = packsJeu(type);
+    pageAccueilJeu({
+      titre: J.nom,
+      plus: "#/" + type + "-ajouter",
+      consigne: "Choisissez un carnet",
+      vide: "Aucune grille pour l'instant.",
+      items: liste.map((pk) => {
+        const n = pk.grilles.filter(J.fini).length, t = pk.grilles.length;
+        return {
+          href: lienJeu(type, pk.id), titre: pk.titre, couverture: pk.couverture, fini: n === t,
+          cle: type + "|" + pk.id + "|" + t,
+          etat: n ? `${n} sur ${t} terminée${n > 1 ? "s" : ""}` : `${t} grille${t > 1 ? "s" : ""}`,
+        };
+      }),
+    });
+    completerCouvertures(type, liste);
+  }
+
+  function ecranPackJeu(type, id) {
+    const J = JEUX[type];
+    const pk = packsJeu(type).find((x) => x.id === id);
+    if (!pk) { location.hash = "#/" + type; return; }
+    vider();
+    document.title = pk.titre;
+    const cartes = pk.grilles.map((g) => {
+      const c = J.carte(g, lienJeu(type, pk.id, g.id));
+      return `<div class="carte-bloc">${c.html}${c.entamee ? `<button class="btn btn-raz" data-raz="${echap(g.id)}">↺ Recommencer cette grille</button>` : ""}</div>`;
+    }).join("");
     app.innerHTML = `
       <div class="page">
         <header class="barre">
-          <a class="btn btn-retour" href="#/">← Accueil</a>
-          <h1>Mots codés</h1>
+          <a class="btn btn-retour" href="#/${type}">← Carnets</a>
+          <h1>${echap(pk.titre)}</h1>
         </header>
-        ${sections}
-        <p class="vers-biblio">D'autres grilles sont disponibles dans la <a href="#/bibliotheque">Bibliothèque</a>.</p>
+        <div class="cartes">${cartes}</div>
+        ${pk.integre ? "" : `<p class="pz-pied"><button class="btn btn-discret" data-retirer-pack>Retirer ce carnet de la tablette</button></p>`}
       </div>`;
     app.querySelectorAll("[data-raz]").forEach((b) => b.addEventListener("click", () => {
-      const g = grillesMC().find((x) => x.id === b.dataset.raz);
+      const g = pk.grilles.find((x) => x.id === b.dataset.raz);
       modal({
         titre: `Recommencer « ${echap(g.nom)} » ?`,
-        html: "<p>Toutes les lettres trouvées dans cette grille seront effacées.</p>",
+        html: `<p>${J.raz}</p>`,
         boutons: [
           { label: "Non, garder" },
-          { label: "Oui, recommencer", classe: "btn-danger", action: () => { window.MotsCodes.reinitialiser(g); ecranListeMC(); } },
+          { label: "Oui, recommencer", classe: "btn-danger", action: () => { J.module().reinitialiser(g); ecranPackJeu(type, id); } },
         ],
       });
     }));
+    const retirer = app.querySelector("[data-retirer-pack]");
+    if (retirer) retirer.addEventListener("click", () => {
+      modal({
+        titre: `Retirer « ${echap(pk.titre)} » ?`,
+        html: "<p>Ces grilles seront effacées de la tablette. Vous pourrez les télécharger à nouveau avec le bouton ＋.</p>",
+        boutons: [
+          { label: "Non, garder" },
+          { label: "Oui, retirer", classe: "btn-danger", action: async () => {
+            await window.Bibliotheque.supprimer(pk.id);
+            location.hash = "#/" + type;
+          } },
+        ],
+      });
+    });
   }
 
-  function ecranJeuMC(id) {
-    const g = grillesMC().find((x) => x.id === id);
-    if (!g) { location.hash = "#/mots-codes"; return; }
+  function ecranGrille(type, idPack, id) {
+    const J = JEUX[type];
+    const pk = packsJeu(type).find((x) => x.id === idPack);
+    const g = pk && pk.grilles.find((x) => x.id === id);
+    if (!g) { location.hash = pk ? lienJeu(type, idPack) : "#/" + type; return; }
     vider();
-    document.title = "Mots codés — " + g.nom;
-    nettoyage = window.MotsCodes.ouvrir(app, g);
+    document.title = J.nom + " — " + g.nom;
+    nettoyage = J.module().ouvrir(app, g, lienJeu(type, idPack));
+  }
+
+  function ecranAjoutJeu(type) {
+    ecranCatalogue({
+      titre: "Ajouter des carnets",
+      retour: ["#/" + type, "← Carnets"],
+      sections: [{ type, titre: "Carnets à télécharger", unite: (n) => n + (n > 1 ? " grilles" : " grille") }],
+      ouvrir: (el) => lienJeu(type, el.id),
+      vide: "Aucun carnet disponible pour l'instant.",
+    });
   }
 
   // ---------- Puzzle : packs d'images ----------
-  const packs = () => window.Bibliotheque.packs;
+  const packs = () => window.Bibliotheque.packs.filter((pk) => pk.type === "images");
   const lienPack = (id) => "#/puzzle/" + encodeURIComponent(id);
   const reussies = (pk) => pk.photos.filter((ph) => window.Puzzle.etat(ph).reussites).length;
 
@@ -250,39 +307,26 @@
   function ecranAccueilPZ() {
     vider();
     document.title = "Puzzle";
-    const liste = packs().filter((pk) => pk.photos.length);
-    const cartes = liste.map((pk) => {
-      const n = reussies(pk);
-      const etat = n ? `${n} sur ${pk.photos.length} réussi${n > 1 ? "s" : ""}` : `${pk.photos.length} image${pk.photos.length > 1 ? "s" : ""}`;
-      const img = pk.couverture
-        ? `<img src="${pk.couverture}" alt="">`
-        : `<span class="pz-pack-sans">${echap(pk.titre)}</span>`;
-      return `<a class="pz-pack${n === pk.photos.length ? " fini" : ""}" href="${lienPack(pk.id)}" aria-label="${echap(pk.titre)}">
-          <span class="pz-pack-couv">${img}</span>
-          <span class="pz-pack-etat">${n === pk.photos.length ? "✓ " : ""}${etat}</span>
-        </a>`;
-    }).join("");
-    const vide = `
-        <div class="vide">
-          <p>Aucune image pour l'instant.</p>
-          <a class="btn btn-principal" href="#/puzzle-ajouter">＋ Ajouter des images</a>
-        </div>`;
-    app.innerHTML = `
-      <div class="page">
-        <header class="barre">
-          <a class="btn btn-retour" href="#/">← Accueil</a>
-          <h1>Puzzle</h1>
-          <span class="espace"></span>
-          <a class="btn btn-plus" href="#/puzzle-ajouter" aria-label="Ajouter des images">＋</a>
-        </header>
-        ${liste.length ? `<p class="pz-consigne">Choisissez un pack d'images</p><div class="pz-packs">${cartes}</div>` : vide}
-      </div>`;
+    pageAccueilJeu({
+      titre: "Puzzle",
+      plus: "#/puzzle-ajouter",
+      consigne: "Choisissez un pack d'images",
+      vide: "Aucune image pour l'instant.",
+      items: packs().filter((pk) => pk.photos.length && !pk.archive).map((pk) => {
+        const n = reussies(pk), t = pk.photos.length;
+        return {
+          href: lienPack(pk.id), titre: pk.titre, couverture: pk.couverture, fini: n === t,
+          etat: n ? `${n} sur ${t} réussi${n > 1 ? "s" : ""}` : `${t} image${t > 1 ? "s" : ""}`,
+        };
+      }),
+    });
   }
 
   // Un pack : ses images. Pour « Mes images » : ajout et retrait de photos.
   function ecranPackPZ(id) {
     const pk = packs().find((x) => x.id === id);
     if (!pk || !pk.photos.length) { location.hash = "#/puzzle"; return; }
+    // Pack archivé : consultable par son adresse, mais en lecture seule.
     vider();
     document.title = pk.titre;
     const cartes = pk.photos.map((ph) => {
@@ -290,12 +334,12 @@
       let badge = "";
       if (e.enCours) badge = `<span class="pz-badge encours">En cours</span>`;
       else if (e.reussites) badge = `<span class="pz-badge fini">✓ Réussi${e.reussites > 1 ? " ×" + e.reussites : ""}</span>`;
-      const retirer = pk.local ? `<button class="pz-retirer" data-retirer="${echap(ph.id)}" aria-label="Retirer cette photo">✕</button>` : "";
+      const retirer = pk.local && !pk.archive ? `<button class="pz-retirer" data-retirer="${echap(ph.id)}" aria-label="Retirer cette photo">✕</button>` : "";
       return `<div class="pz-bloc"><a class="pz-carte" href="${lienPack(pk.id)}/${encodeURIComponent(ph.id)}">
           <img src="${ph.mini}" alt="${echap(ph.titre)}">${badge}
         </a>${retirer}</div>`;
     }).join("");
-    const ajout = pk.local && pk.photos.length < 12
+    const ajout = pk.local && !pk.archive && pk.photos.length < 12
       ? `<div class="pz-bloc"><a class="pz-carte pz-ajout" href="#/ajouter-photo/${encodeURIComponent(pk.id)}"><span>＋</span>Ajouter des photos</a></div>` : "";
     const credits = pk.photos.some((ph) => ph.credit);
     app.innerHTML = `
@@ -308,7 +352,7 @@
         </header>
         <p class="pz-consigne">Choisissez une image</p>
         <div class="pz-cartes">${cartes}${ajout}</div>
-        <p class="pz-pied"><button class="btn btn-discret" data-retirer-pack>${pk.local ? "Supprimer ce pack" : "Retirer ce pack de la tablette"}</button></p>
+        ${pk.archive ? "" : `<p class="pz-pied"><button class="btn btn-discret" data-retirer-pack>${pk.local ? "Archiver ce pack" : "Retirer ce pack de la tablette"}</button></p>`}
       </div>`;
     app.querySelectorAll("[data-retirer]").forEach((b) => b.addEventListener("click", () => {
       modal({
@@ -323,16 +367,17 @@
         ],
       });
     }));
-    app.querySelector("[data-retirer-pack]").addEventListener("click", () => {
+    const btnRetirer = app.querySelector("[data-retirer-pack]");
+    if (btnRetirer) btnRetirer.addEventListener("click", () => {
       modal({
-        titre: pk.local ? `Supprimer « ${echap(pk.titre)} » ?` : `Retirer « ${echap(pk.titre)} » ?`,
+        titre: pk.local ? `Archiver « ${echap(pk.titre)} » ?` : `Retirer « ${echap(pk.titre)} » ?`,
         html: pk.local
-          ? "<p>Les photos de ce pack seront effacées de l'appli. Les photos d'origine ne sont pas touchées.</p>"
+          ? "<p>Le pack n'apparaîtra plus dans le Puzzle, mais ses photos sont conservées sur la tablette.</p>"
           : "<p>Ces images seront effacées de la tablette. Vous pourrez les télécharger à nouveau avec le bouton ＋.</p>",
         boutons: [
           { label: "Non, garder" },
-          { label: pk.local ? "Oui, supprimer" : "Oui, retirer", classe: "btn-danger", action: async () => {
-            await window.Bibliotheque.supprimer(pk.id);
+          { label: pk.local ? "Oui, archiver" : "Oui, retirer", classe: pk.local ? "btn-principal" : "btn-danger", action: async () => {
+            if (pk.local) await window.Bibliotheque.archiver(pk.id); else await window.Bibliotheque.supprimer(pk.id);
             location.hash = "#/puzzle";
           } },
         ],
@@ -540,19 +585,9 @@
 
   // ---------- Bibliothèque ----------
   const mo = (o) => (o >= 1e6 ? (o / 1e6).toLocaleString("fr-FR", { maximumFractionDigits: 1 }) + " Mo" : Math.max(1, Math.round(o / 1e3)) + " Ko");
-  // La Bibliothèque ne propose plus que les grilles : les images s'ajoutent depuis le Puzzle.
-  const SECTIONS = [
-    { type: "chasse-croise", titre: "Grilles de chassé-croisé", unite: (n) => n + (n > 1 ? " grilles" : " grille") },
-    { type: "mots-codes", titre: "Grilles de mots codés", unite: (n) => n + (n > 1 ? " grilles" : " grille") },
-  ];
-
-  function ecranBibliotheque() {
-    ecranCatalogue({ titre: "Bibliothèque", retour: ["#/", "← Accueil"], sections: SECTIONS });
-  }
-
   // Liste des contenus du serveur pour les types de `sections`, avec leur état sur la tablette.
   // `avant` : HTML affiché en tête ; `ouvrir(el)` : lien vers un contenu installé.
-  async function ecranCatalogue({ titre, retour, sections, avant, ouvrir }) {
+  async function ecranCatalogue({ titre, retour, sections, avant, ouvrir, vide }) {
     const SECTIONS = sections;
     vider();
     document.title = titre;
@@ -616,7 +651,7 @@
       const avis = horsLigne
         ? `<p class="biblio-avis">Pas de connexion à Internet : seuls les contenus déjà sur la tablette sont affichés.</p>` : "";
       ecran.querySelector(".biblio-attente, .biblio-contenu").outerHTML =
-        `<div class="biblio-contenu">${avis}${corps || `<p class="biblio-avis">Rien à afficher pour l'instant.</p>`}</div>`;
+        `<div class="biblio-contenu">${avis}${corps || `<p class="biblio-avis">${vide || "Rien à afficher pour l'instant."}</p>`}</div>`;
     };
     rendre();
 
@@ -659,17 +694,17 @@
   function route() {
     const h = location.hash.replace(/^#\/?/, "");
     const parts = h.split("/").filter(Boolean).map(decodeURIComponent);
-    if (parts[0] === "chasse-croise" && parts[1]) ecranJeuCC(parts[1]);
-    else if (parts[0] === "chasse-croise") ecranListeCC();
-    else if (parts[0] === "puzzle" && parts[2] === "credits") ecranCreditsPZ(parts[1]);
-    else if (parts[0] === "puzzle" && parts[2]) ecranJeuPZ(parts[1], parts[2]);
-    else if (parts[0] === "puzzle" && parts[1]) ecranPackPZ(parts[1]);
-    else if (parts[0] === "puzzle") ecranAccueilPZ();
-    else if (parts[0] === "puzzle-ajouter") ecranAjoutPZ();
-    else if (parts[0] === "mots-codes" && parts[1]) ecranJeuMC(parts[1]);
-    else if (parts[0] === "mots-codes") ecranListeMC();
-    else if (parts[0] === "bibliotheque") ecranBibliotheque();
-    else if (parts[0] === "ajouter-photo") ecranAjoutPhoto(parts[1] || "");
+    const [ecran, a, b] = parts;
+    if (JEUX[ecran] && b) ecranGrille(ecran, a, b);
+    else if (JEUX[ecran] && a) ecranPackJeu(ecran, a);
+    else if (JEUX[ecran]) ecranAccueilJeu(ecran);
+    else if (ecran && ecran.endsWith("-ajouter") && JEUX[ecran.slice(0, -8)]) ecranAjoutJeu(ecran.slice(0, -8));
+    else if (ecran === "puzzle" && b === "credits") ecranCreditsPZ(a);
+    else if (ecran === "puzzle" && b) ecranJeuPZ(a, b);
+    else if (ecran === "puzzle" && a) ecranPackPZ(a);
+    else if (ecran === "puzzle") ecranAccueilPZ();
+    else if (ecran === "puzzle-ajouter") ecranAjoutPZ();
+    else if (ecran === "ajouter-photo") ecranAjoutPhoto(a || "");
     else ecranPortail();
     window.scrollTo(0, 0);
   }

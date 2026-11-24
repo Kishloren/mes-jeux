@@ -99,7 +99,8 @@
 
   const CLAVIER = ["AZERTYUIOP", "QSDFGHJKLM", "WXCVBN"];
 
-  function ouvrir(racine, g) {
+  // base : adresse de la liste des grilles (le carnet).
+  function ouvrir(racine, g, base = "#/chasse-croise") {
     const A = analyser(g);
     const { N, lettres, proprio, mots } = A;
     const st = charger(g, N);
@@ -117,7 +118,7 @@
     racine.innerHTML = `
       <div class="cc">
         <header class="barre">
-          <a class="btn btn-retour" href="#/chasse-croise">← Retour</a>
+          <a class="btn btn-retour" href="${base}">← Retour</a>
           <h1>${UI.echap(g.nom)}</h1>
           <span class="espace"></span>
           <button class="btn" data-act="verifier">Vérifier</button>
@@ -473,7 +474,7 @@
         boutons: [
           { label: "Rester sur la grille" },
           { label: "↺ Recommencer la grille", action: demanderRecommencer },
-          { label: "Retour aux grilles", classe: "btn-principal", action: () => { location.hash = "#/chasse-croise"; } },
+          { label: "Retour aux grilles", classe: "btn-principal", action: () => { location.hash = base; } },
         ],
       });
     }

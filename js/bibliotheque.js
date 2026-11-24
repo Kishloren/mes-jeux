@@ -5,7 +5,12 @@
 
   const BASE = "https://www.stansgames.fr/jeux-tablette/api";
   const URL_INDEX = BASE + "/v1/bibliotheque";
-  const TYPES = { images: "mes-jeux-pack-images", "chasse-croise": "mes-jeux-carnet-cc", "mots-codes": "mes-jeux-carnet-mc" };
+  // Formats de manifeste acceptés pour chaque type.
+  const TYPES = {
+    images: ["mes-jeux-pack-images"],
+    "chasse-croise": ["mes-jeux-carnet-cc"],
+    "mots-codes": ["mes-jeux-carnet-mc", "mes-jeux-pack-mots-codes"],
+  };
 
   // ---------- IndexedDB ----------
   // elements : éléments installés { id, type, version, titre, description, contenu: [ids],
@@ -71,16 +76,20 @@
       get mini() { return urlDe(im.vignette); },
     }));
     const parId = new Map(etat.photos.map((p) => [p.id, p]));
-    etat.packs = elements.filter((e) => e.type === "images").map((e) => ({
-      id: e.id,
-      titre: e.titre,
-      local: !!e.local,
-      version: e.version,
-      photos: (e.contenu || []).map((id) => parId.get(id)).filter(Boolean),
-      get couverture() { return e.couverture ? urlDe(e.couverture) : null; },
-    }));
     grilles.sort((a, b) => rang(a) - rang(b));
     const enClair = (g) => Object.assign({ carnet: g.carnet }, g.grille);
+    const grParId = new Map(grilles.map((g) => [g.id, enClair(g)]));
+    etat.packs = elements.map((e) => ({
+      id: e.id,
+      type: e.type,
+      titre: e.titre,
+      local: !!e.local,
+      archive: !!e.archive,
+      version: e.version,
+      photos: e.type === "images" ? (e.contenu || []).map((id) => parId.get(id)).filter(Boolean) : [],
+      grilles: e.type !== "images" ? (e.contenu || []).map((id) => grParId.get(id)).filter(Boolean) : [],
+      get couverture() { return e.couverture ? urlDe(e.couverture) : null; },
+    }));
     etat.grilles = grilles.filter((g) => g.jeu !== "mc").map(enClair);
     etat.motsCodes = grilles.filter((g) => g.jeu === "mc").map(enClair);
   }
@@ -156,6 +165,22 @@
     };
   }
 
+  // Mots codés : deux formats. « mes-jeux-carnet-mc » est déjà le format interne ;
+  // « mes-jeux-pack-mots-codes » (back-office) donne la solution et une correspondance sur
+  // 26 nombres, que l'on renumérote de 1 à n sur les seules lettres présentes.
+  function versInterneMC(g) {
+    if (g.lignes) return { id: g.id, nom: g.titre, niveau: g.niveau, lignes: g.lignes, codes: g.codes, devoiles: g.devoiles || [] };
+    const lignes = (g.solution || []).map((l) => (Array.isArray(l) ? l.join("") : String(l)));
+    const presentes = new Set(lignes.join("").replace(/#/g, ""));
+    const numero = {}; // lettre -> nombre d'origine
+    Object.entries(g.correspondance || {}).forEach(([n, ch]) => { numero[ch] = +n; });
+    const ordre = [...presentes].sort((a, b) => (numero[a] || 99) - (numero[b] || 99));
+    const codes = {};
+    ordre.forEach((ch, i) => { codes[ch] = i + 1; });
+    const devoiles = [...new Set((g.lettres_donnees || []).map((x) => x.lettre).filter((ch) => presentes.has(ch)))];
+    return { id: g.id, nom: g.titre, niveau: g.niveau, lignes, codes, devoiles };
+  }
+
   // Installe (ou met à jour) un élément de l'index. `progres(fait, total)`.
   // Rien n'est écrit tant que tout n'est pas téléchargé et vérifié.
   async function installer(el, progres) {
@@ -163,7 +188,12 @@
     const rep = await fetch(el.manifeste);
     if (!rep.ok) throw new Error("HTTP " + rep.status);
     const m = await rep.json();
-    if (m.format !== TYPES[el.type] || m.version_format !== 1 || m.id !== el.id) throw new Error("format inconnu");
+    if (!(TYPES[el.type] || []).includes(m.format) || m.version_format !== 1 || m.id !== el.id) throw new Error("format inconnu");
+    // Couverture du pack (tous les types). « reload » : l'image a pu être affichée avant
+    // sans en-têtes CORS, et le navigateur ne doit pas resservir cette copie.
+    const couvP = el.vignette
+      ? fetch(el.vignette, { cache: "reload" }).then((r) => (r.ok ? r.blob() : null)).catch(() => null)
+      : Promise.resolve(null);
 
     let nouveaux = [];
     let couvertureRecue = null;
@@ -176,8 +206,6 @@
         taches.push(() => telechargerFichier(im.variantes.vignette));
         taches.push(() => telechargerFichier(im.variantes[v]));
       });
-      let couverture = null;
-      if (el.vignette) taches.push(() => fetch(el.vignette, { cache: "reload" }).then((r) => (r.ok ? r.blob() : null)).catch(() => null).then((b) => { couverture = b; }));
       const blobs = await enParallele(taches, 4, progres);
       nouveaux = images.map((im, i) => ({
         id: im.id,
@@ -187,7 +215,6 @@
         image: blobs[2 * i + 1],
         variante: varianteVoulue(im.variantes),
       }));
-      couvertureRecue = couverture;
     } else if (el.type === "chasse-croise") {
       progres(0, 1);
       nouveaux = m.grilles
@@ -198,12 +225,13 @@
     } else {
       progres(0, 1);
       nouveaux = m.grilles
-        .map((g) => ({ id: g.id, nom: g.titre, niveau: g.niveau, lignes: g.lignes, codes: g.codes, devoiles: g.devoiles || [] }))
+        .map(versInterneMC)
         .filter((g) => window.MotsCodes.valider(g).length === 0)
         .map((g) => ({ id: g.id, jeu: "mc", grille: g, carnet: m.titre }));
       progres(1, 1);
     }
     if (!nouveaux.length) throw new Error("aucun contenu valide");
+    couvertureRecue = await couvP;
 
     // Écriture en une seule transaction.
     const d = await db();
@@ -228,9 +256,7 @@
       id: el.id, type: el.type, version: el.version, titre: el.titre,
       description: el.description || "", contenu: nouveaux.map((x) => x.id),
     };
-    if (el.type === "images") {
-      enr.couverture = couvertureRecue && couvertureRecue.type.startsWith("image/") ? couvertureRecue : null;
-    }
+    enr.couverture = couvertureRecue && couvertureRecue.type.startsWith("image/") ? couvertureRecue : null;
     sEl.put(enr);
     await finTx(tx);
     // Couverture absente (téléchargement raté) : on la fabrique à partir des images.
@@ -239,6 +265,7 @@
   }
 
   async function supprimer(id) {
+    if (id.startsWith(MES_IMAGES)) return archiver(id); // jamais d'effacement d'un pack personnel
     const d = await db();
     const tx = d.transaction(["elements", "images", "grilles"], "readwrite");
     const sEl = tx.objectStore("elements");
@@ -289,7 +316,8 @@
     const sEl = tx.objectStore("elements");
     const locaux = (await req(sEl.getAll())).filter((e) => e.local && e.id.startsWith(MES_IMAGES))
       .sort((a, b) => a.numero - b.numero);
-    let el = locaux.find((e) => e.id === pack && e.contenu.length < PAR_PACK) || locaux.find((e) => e.contenu.length < PAR_PACK);
+    const ouverts = locaux.filter((e) => !e.archive && e.contenu.length < PAR_PACK);
+    let el = ouverts.find((e) => e.id === pack) || ouverts[0];
     if (!el) {
       const n = locaux.reduce((m, e) => Math.max(m, e.numero), 0) + 1;
       el = { id: MES_IMAGES + n, numero: n, type: "images", local: true, version: 0, titre: nomPack(n), description: "", contenu: [] };
@@ -302,6 +330,17 @@
     await refaireCouverture(el.id);
     await charger();
     return el.id;
+  }
+
+  // Les packs personnels ne sont jamais effacés : ils sont archivés (masqués, mais conservés).
+  async function archiver(id, oui = true) {
+    const d = await db();
+    const tx = d.transaction("elements", "readwrite");
+    const sEl = tx.objectStore("elements");
+    const el = await req(sEl.get(id));
+    if (el && el.local) { el.archive = oui; sEl.put(el); }
+    await finTx(tx);
+    await charger();
   }
 
   async function retirerPhoto(id) {
@@ -353,7 +392,7 @@
   }
 
   window.Bibliotheque = {
-    charger, lireIndex, installer, supprimer, ajouterPhoto, retirerPhoto, varianteVoulue,
+    charger, lireIndex, installer, supprimer, ajouterPhoto, retirerPhoto, archiver, varianteVoulue,
     get elements() { return etat.elements; },
     get photos() { return etat.photos; },
     get packs() { return etat.packs; },

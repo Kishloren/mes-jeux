@@ -1,6 +1,6 @@
 // Service worker : l'application fonctionne hors connexion.
 // Changer VERSION à chaque mise en ligne pour forcer la mise à jour.
-const VERSION = "mes-jeux-v24";
+const VERSION = "mes-jeux-v25";
 const FICHIERS = [
   "./",
   "index.html",
