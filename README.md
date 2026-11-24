@@ -14,7 +14,11 @@ Cible prioritaire : les tablettes, en mode portrait.
   l'appli interroge l'API décrite dans [docs/specification-bibliotheque.md](docs/specification-bibliotheque.md)
   (`https://www.stansgames.fr/jeux-tablette/api`) et conserve les contenus téléchargés sur l'appareil (IndexedDB).
 - Aucune photo personnelle ne doit être ajoutée à ce dépôt public.
-- Photos personnelles : elles s'ajoutent depuis l'appli (Puzzle → « Ajouter une photo »), depuis la tablette ou Google Photos (mise en place : `docs/google-photos.md`). Elles sont recadrées, réencodées sans métadonnées et restent sur l'appareil.
+- Puzzle : l'accueil présente les packs d'images de la tablette ; le bouton ＋ permet d'en télécharger
+  et de créer des packs avec ses photos (tablette ou Google Photos, mise en place : `docs/google-photos.md`).
+  Les photos sont recadrées, réencodées sans métadonnées, rangées par 12 dans des packs « Mes images »
+  et restent sur l'appareil. Les couvertures des packs suivent le § 4 de l'API (`js/couverture.js`),
+  avec la police DejaVu Serif Bold (licence libre, `fonts/LICENSE-DejaVu.txt`).
 
 ## Mise en ligne
 

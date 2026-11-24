@@ -8,7 +8,8 @@
   const TYPES = { images: "mes-jeux-pack-images", "chasse-croise": "mes-jeux-carnet-cc", "mots-codes": "mes-jeux-carnet-mc" };
 
   // ---------- IndexedDB ----------
-  // elements : éléments installés { id, type, version, titre, description, octets, contenu: [ids] }
+  // elements : éléments installés { id, type, version, titre, description, contenu: [ids],
+  //            couverture: Blob (packs d'images), local: true pour les packs « Mes images » }
   // images   : { id, titre, credit, vignette: Blob, image: Blob, variante, elements: [ids] }
   // grilles  : { id, jeu ("cc" ou "mc"), grille (format interne du jeu), carnet, elements: [ids] }
   let dbPromesse = null;
@@ -40,7 +41,7 @@
   });
 
   // ---------- État en mémoire (chargé au démarrage) ----------
-  const etat = { elements: [], photos: [], grilles: [], motsCodes: [] };
+  const etat = { elements: [], photos: [], packs: [], grilles: [], motsCodes: [] };
   const urls = new Map(); // Blob -> URL d'objet, pour ne pas les recréer
 
   function urlDe(blob) {
@@ -48,13 +49,15 @@
     return urls.get(blob);
   }
 
+  let migre = false;
   async function charger() {
+    if (!migre) { migre = true; await migrer().catch(() => {}); }
     const [elements, images, grilles] = await Promise.all([tout("elements"), tout("images"), tout("grilles")]);
     urls.forEach((u) => URL.revokeObjectURL(u));
     urls.clear();
     const ordre = new Map();
-    // Mes photos d'abord, puis les contenus téléchargés par ordre alphabétique.
-    elements.sort((a, b) => (b.local ? 1 : 0) - (a.local ? 1 : 0) || a.titre.localeCompare(b.titre, "fr"));
+    // Mes images d'abord, puis les contenus téléchargés par ordre alphabétique.
+    elements.sort((a, b) => (b.local ? 1 : 0) - (a.local ? 1 : 0) || a.titre.localeCompare(b.titre, "fr", { numeric: true }));
     elements.forEach((e, i) => (e.contenu || []).forEach((id, j) => { if (!ordre.has(id)) ordre.set(id, i * 1000 + j); }));
     const rang = (x) => (ordre.has(x.id) ? ordre.get(x.id) : 1e9);
     etat.elements = elements;
@@ -63,9 +66,18 @@
       titre: im.titre,
       credit: im.credit,
       element: im.elements[0],
-      perso: im.elements[0] === MES_PHOTOS,
+      perso: im.elements[0].startsWith(MES_IMAGES),
       get image() { return urlDe(im.image); },
       get mini() { return urlDe(im.vignette); },
+    }));
+    const parId = new Map(etat.photos.map((p) => [p.id, p]));
+    etat.packs = elements.filter((e) => e.type === "images").map((e) => ({
+      id: e.id,
+      titre: e.titre,
+      local: !!e.local,
+      version: e.version,
+      photos: (e.contenu || []).map((id) => parId.get(id)).filter(Boolean),
+      get couverture() { return e.couverture ? urlDe(e.couverture) : null; },
     }));
     grilles.sort((a, b) => rang(a) - rang(b));
     const enClair = (g) => Object.assign({ carnet: g.carnet }, g.grille);
@@ -154,6 +166,7 @@
     if (m.format !== TYPES[el.type] || m.version_format !== 1 || m.id !== el.id) throw new Error("format inconnu");
 
     let nouveaux = [];
+    let couvertureRecue = null;
     const store = el.type === "images" ? "images" : "grilles";
     if (el.type === "images") {
       const images = m.images.filter((im) => im.ratio === "2:3" && im.variantes && im.variantes.vignette);
@@ -163,6 +176,8 @@
         taches.push(() => telechargerFichier(im.variantes.vignette));
         taches.push(() => telechargerFichier(im.variantes[v]));
       });
+      let couverture = null;
+      if (el.vignette) taches.push(() => fetch(el.vignette, { cache: "reload" }).then((r) => (r.ok ? r.blob() : null)).catch(() => null).then((b) => { couverture = b; }));
       const blobs = await enParallele(taches, 4, progres);
       nouveaux = images.map((im, i) => ({
         id: im.id,
@@ -172,6 +187,7 @@
         image: blobs[2 * i + 1],
         variante: varianteVoulue(im.variantes),
       }));
+      couvertureRecue = couverture;
     } else if (el.type === "chasse-croise") {
       progres(0, 1);
       nouveaux = m.grilles
@@ -208,11 +224,17 @@
       x.elements = x.elements.filter((e) => e !== el.id);
       if (x.elements.length) sC.put(x); else sC.delete(id);
     }
-    sEl.put({
+    const enr = {
       id: el.id, type: el.type, version: el.version, titre: el.titre,
       description: el.description || "", contenu: nouveaux.map((x) => x.id),
-    });
+    };
+    if (el.type === "images") {
+      enr.couverture = couvertureRecue && couvertureRecue.type.startsWith("image/") ? couvertureRecue : null;
+    }
+    sEl.put(enr);
     await finTx(tx);
+    // Couverture absente (téléchargement raté) : on la fabrique à partir des images.
+    if (el.type === "images" && !enr.couverture) await refaireCouverture(el.id);
     await charger();
   }
 
@@ -235,45 +257,106 @@
     await charger();
   }
 
-  // ---------- Photos importées depuis la tablette ou Google Photos ----------
-  // Elles restent sur l'appareil, rangées dans l'élément local « mes-photos ».
-  const MES_PHOTOS = "mes-photos";
+  // ---------- Photos personnelles : packs « Mes images » de 12 photos ----------
+  // Elles restent sur l'appareil. Chaque pack local a sa couverture, fabriquée comme
+  // celles du catalogue (js/couverture.js).
+  const MES_IMAGES = "mes-images-";
+  const PAR_PACK = 12;
+  const nomPack = (n) => (n === 1 ? "Mes images" : "Mes images " + n);
 
-  async function ajouterPhoto({ image, vignette, titre }) {
+  // Refait la couverture d'un pack à partir de ses vignettes (hors transaction : le
+  // dessin est asynchrone).
+  async function refaireCouverture(idPack) {
+    const d = await db();
+    const el = await req(d.transaction("elements").objectStore("elements").get(idPack));
+    if (!el) return;
+    const sIm = d.transaction("images").objectStore("images");
+    const ims = await Promise.all(el.contenu.map((id) => req(sIm.get(id))));
+    let couverture = null;
+    try { couverture = await window.Couverture.generer(el.titre, ims.filter(Boolean).map((im) => im.vignette)); } catch (e) { /* sans couverture */ }
+    const tx = d.transaction("elements", "readwrite");
+    const sEl = tx.objectStore("elements");
+    const frais = await req(sEl.get(idPack));
+    if (frais) { frais.couverture = couverture; sEl.put(frais); }
+    await finTx(tx);
+  }
+
+  // Ajoute une photo au premier pack « Mes images » qui a de la place, ou à un nouveau pack.
+  // Renvoie l'identifiant du pack.
+  async function ajouterPhoto({ image, vignette, titre, pack }) {
     const d = await db();
     const tx = d.transaction(["elements", "images"], "readwrite");
     const sEl = tx.objectStore("elements");
-    const el = (await req(sEl.get(MES_PHOTOS))) || {
-      id: MES_PHOTOS, type: "images", local: true, version: 0, titre: "Mes photos",
-      description: "Photos ajoutées depuis la tablette ou Google Photos", contenu: [],
-    };
+    const locaux = (await req(sEl.getAll())).filter((e) => e.local && e.id.startsWith(MES_IMAGES))
+      .sort((a, b) => a.numero - b.numero);
+    let el = locaux.find((e) => e.id === pack && e.contenu.length < PAR_PACK) || locaux.find((e) => e.contenu.length < PAR_PACK);
+    if (!el) {
+      const n = locaux.reduce((m, e) => Math.max(m, e.numero), 0) + 1;
+      el = { id: MES_IMAGES + n, numero: n, type: "images", local: true, version: 0, titre: nomPack(n), description: "", contenu: [] };
+    }
     const id = "perso-" + Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
-    tx.objectStore("images").put({ id, titre: titre || "", credit: null, vignette, image, variante: "perso", elements: [MES_PHOTOS] });
-    el.contenu = [id, ...el.contenu]; // la plus récente en premier
+    tx.objectStore("images").put({ id, titre: titre || "", credit: null, vignette, image, variante: "perso", elements: [el.id] });
+    el.contenu = [...el.contenu, id];
     sEl.put(el);
     await finTx(tx);
+    await refaireCouverture(el.id);
     await charger();
-    return id;
+    return el.id;
   }
 
   async function retirerPhoto(id) {
     const d = await db();
     const tx = d.transaction(["elements", "images"], "readwrite");
-    const sEl = tx.objectStore("elements");
-    const el = await req(sEl.get(MES_PHOTOS));
-    tx.objectStore("images").delete(id);
-    if (el) {
+    const sIm = tx.objectStore("images"), sEl = tx.objectStore("elements");
+    const im = await req(sIm.get(id));
+    const packs = im ? im.elements : [];
+    sIm.delete(id);
+    const vides = [];
+    for (const p of packs) {
+      const el = await req(sEl.get(p));
+      if (!el) continue;
       el.contenu = el.contenu.filter((x) => x !== id);
-      if (el.contenu.length) sEl.put(el); else sEl.delete(MES_PHOTOS);
+      if (el.contenu.length) sEl.put(el); else { sEl.delete(p); vides.push(p); }
     }
     await finTx(tx);
+    for (const p of packs) if (!vides.includes(p)) await refaireCouverture(p);
     await charger();
+  }
+
+  // Versions 20 et 21 : les photos personnelles étaient dans un seul élément « mes-photos »
+  // (la plus récente en premier). On les range par 12 dans des packs « Mes images ».
+  // On fabrique aussi les couvertures manquantes des packs téléchargés avant la version 22.
+  async function migrer() {
+    const d = await db();
+    let tx = d.transaction(["elements", "images"], "readwrite");
+    let sEl = tx.objectStore("elements");
+    const ancien = await req(sEl.get("mes-photos"));
+    const aRefaire = [];
+    if (ancien) {
+      const sIm = tx.objectStore("images");
+      const ids = [...ancien.contenu].reverse();
+      for (let k = 0; k * PAR_PACK < ids.length; k++) {
+        const n = k + 1, idPack = MES_IMAGES + n, part = ids.slice(k * PAR_PACK, (k + 1) * PAR_PACK);
+        sEl.put({ id: idPack, numero: n, type: "images", local: true, version: 0, titre: nomPack(n), description: "", contenu: part });
+        for (const id of part) {
+          const im = await req(sIm.get(id));
+          if (im) { im.elements = [idPack]; sIm.put(im); }
+        }
+        aRefaire.push(idPack);
+      }
+      sEl.delete("mes-photos");
+    }
+    await finTx(tx);
+    const tous = await tout("elements");
+    tous.forEach((e) => { if (e.type === "images" && !e.couverture && !aRefaire.includes(e.id)) aRefaire.push(e.id); });
+    for (const id of aRefaire) await refaireCouverture(id);
   }
 
   window.Bibliotheque = {
     charger, lireIndex, installer, supprimer, ajouterPhoto, retirerPhoto, varianteVoulue,
     get elements() { return etat.elements; },
     get photos() { return etat.photos; },
+    get packs() { return etat.packs; },
     get grilles() { return etat.grilles; },
     get motsCodes() { return etat.motsCodes; },
   };

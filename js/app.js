@@ -2,7 +2,7 @@
 (function () {
   "use strict";
 
-  const VERSION_APP = "21"; // à incrémenter avec VERSION dans sw.js
+  const VERSION_APP = "22"; // à incrémenter avec VERSION dans sw.js
 
   const Store = {
     get(cle, defaut) {
@@ -241,35 +241,74 @@
     nettoyage = window.MotsCodes.ouvrir(app, g);
   }
 
-  function ecranListePZ() {
+  // ---------- Puzzle : packs d'images ----------
+  const packs = () => window.Bibliotheque.packs;
+  const lienPack = (id) => "#/puzzle/" + encodeURIComponent(id);
+  const reussies = (pk) => pk.photos.filter((ph) => window.Puzzle.etat(ph).reussites).length;
+
+  // Accueil du Puzzle : les packs présents sur la tablette ; « + » pour en ajouter.
+  function ecranAccueilPZ() {
     vider();
     document.title = "Puzzle";
-    const liste = photos();
-    const cartes = liste.map((p) => {
-      const e = window.Puzzle.etat(p);
-      let badge = "";
-      if (e.enCours) badge = `<span class="pz-badge encours">En cours</span>`;
-      else if (e.reussites) badge = `<span class="pz-badge fini">✓ Réussi${e.reussites > 1 ? " ×" + e.reussites : ""}</span>`;
-      const retirer = p.perso ? `<button class="pz-retirer" data-retirer="${echap(p.id)}" aria-label="Retirer cette photo">✕</button>` : "";
-      return `<div class="pz-bloc"><a class="pz-carte" href="#/puzzle/${encodeURIComponent(p.id)}">
-          <img src="${p.mini}" alt="${echap(p.titre)}">${badge}
-        </a>${retirer}</div>`;
+    const liste = packs().filter((pk) => pk.photos.length);
+    const cartes = liste.map((pk) => {
+      const n = reussies(pk);
+      const etat = n ? `${n} sur ${pk.photos.length} réussi${n > 1 ? "s" : ""}` : `${pk.photos.length} image${pk.photos.length > 1 ? "s" : ""}`;
+      const img = pk.couverture
+        ? `<img src="${pk.couverture}" alt="">`
+        : `<span class="pz-pack-sans">${echap(pk.titre)}</span>`;
+      return `<a class="pz-pack${n === pk.photos.length ? " fini" : ""}" href="${lienPack(pk.id)}" aria-label="${echap(pk.titre)}">
+          <span class="pz-pack-couv">${img}</span>
+          <span class="pz-pack-etat">${n === pk.photos.length ? "✓ " : ""}${etat}</span>
+        </a>`;
     }).join("");
-    const ajout = `<div class="pz-bloc"><a class="pz-carte pz-ajout" href="#/ajouter-photo"><span>＋</span>Ajouter une photo</a></div>`;
     const vide = `
         <div class="vide">
           <p>Aucune image pour l'instant.</p>
-          <a class="btn btn-principal" href="#/bibliotheque">Choisir des images dans la Bibliothèque</a>
-          <a class="btn" href="#/ajouter-photo">Ajouter une de mes photos</a>
+          <a class="btn btn-principal" href="#/puzzle-ajouter">＋ Ajouter des images</a>
         </div>`;
     app.innerHTML = `
       <div class="page">
         <header class="barre">
           <a class="btn btn-retour" href="#/">← Accueil</a>
           <h1>Puzzle</h1>
+          <span class="espace"></span>
+          <a class="btn btn-plus" href="#/puzzle-ajouter" aria-label="Ajouter des images">＋</a>
         </header>
-        ${liste.length ? `<p class="pz-consigne">Choisissez une image</p><div class="pz-cartes">${ajout}${cartes}</div>
-        <p class="vers-biblio">D'autres images sont disponibles dans la <a href="#/bibliotheque">Bibliothèque</a>.</p>` : vide}
+        ${liste.length ? `<p class="pz-consigne">Choisissez un pack d'images</p><div class="pz-packs">${cartes}</div>` : vide}
+      </div>`;
+  }
+
+  // Un pack : ses images. Pour « Mes images » : ajout et retrait de photos.
+  function ecranPackPZ(id) {
+    const pk = packs().find((x) => x.id === id);
+    if (!pk || !pk.photos.length) { location.hash = "#/puzzle"; return; }
+    vider();
+    document.title = pk.titre;
+    const cartes = pk.photos.map((ph) => {
+      const e = window.Puzzle.etat(ph);
+      let badge = "";
+      if (e.enCours) badge = `<span class="pz-badge encours">En cours</span>`;
+      else if (e.reussites) badge = `<span class="pz-badge fini">✓ Réussi${e.reussites > 1 ? " ×" + e.reussites : ""}</span>`;
+      const retirer = pk.local ? `<button class="pz-retirer" data-retirer="${echap(ph.id)}" aria-label="Retirer cette photo">✕</button>` : "";
+      return `<div class="pz-bloc"><a class="pz-carte" href="${lienPack(pk.id)}/${encodeURIComponent(ph.id)}">
+          <img src="${ph.mini}" alt="${echap(ph.titre)}">${badge}
+        </a>${retirer}</div>`;
+    }).join("");
+    const ajout = pk.local && pk.photos.length < 12
+      ? `<div class="pz-bloc"><a class="pz-carte pz-ajout" href="#/ajouter-photo/${encodeURIComponent(pk.id)}"><span>＋</span>Ajouter des photos</a></div>` : "";
+    const credits = pk.photos.some((ph) => ph.credit);
+    app.innerHTML = `
+      <div class="page">
+        <header class="barre">
+          <a class="btn btn-retour" href="#/puzzle">← Packs</a>
+          <h1>${echap(pk.titre)}</h1>
+          <span class="espace"></span>
+          ${credits ? `<a class="btn" href="${lienPack(pk.id)}/credits">Crédits</a>` : ""}
+        </header>
+        <p class="pz-consigne">Choisissez une image</p>
+        <div class="pz-cartes">${cartes}${ajout}</div>
+        <p class="pz-pied"><button class="btn btn-discret" data-retirer-pack>${pk.local ? "Supprimer ce pack" : "Retirer ce pack de la tablette"}</button></p>
       </div>`;
     app.querySelectorAll("[data-retirer]").forEach((b) => b.addEventListener("click", () => {
       modal({
@@ -279,25 +318,93 @@
           { label: "Non, garder" },
           { label: "Oui, retirer", classe: "btn-danger", action: async () => {
             await window.Bibliotheque.retirerPhoto(b.dataset.retirer);
-            if (location.hash.replace(/^#\/?/, "") === "puzzle") ecranListePZ();
+            if (location.hash === lienPack(pk.id)) ecranPackPZ(pk.id);
           } },
         ],
       });
     }));
+    app.querySelector("[data-retirer-pack]").addEventListener("click", () => {
+      modal({
+        titre: pk.local ? `Supprimer « ${echap(pk.titre)} » ?` : `Retirer « ${echap(pk.titre)} » ?`,
+        html: pk.local
+          ? "<p>Les photos de ce pack seront effacées de l'appli. Les photos d'origine ne sont pas touchées.</p>"
+          : "<p>Ces images seront effacées de la tablette. Vous pourrez les télécharger à nouveau avec le bouton ＋.</p>",
+        boutons: [
+          { label: "Non, garder" },
+          { label: pk.local ? "Oui, supprimer" : "Oui, retirer", classe: "btn-danger", action: async () => {
+            await window.Bibliotheque.supprimer(pk.id);
+            location.hash = "#/puzzle";
+          } },
+        ],
+      });
+    });
+  }
+
+  // Crédits des images d'un pack (obligatoires pour les licences CC BY).
+  function ecranCreditsPZ(id) {
+    const pk = packs().find((x) => x.id === id);
+    if (!pk) { location.hash = "#/puzzle"; return; }
+    vider();
+    document.title = "Crédits — " + pk.titre;
+    const lien = (url, texte) => (/^https:\/\//.test(url || "") ? `<a href="${echap(url)}" target="_blank" rel="noopener">${echap(texte)}</a>` : echap(texte));
+    const lignes = pk.photos.map((ph) => {
+      const c = ph.credit || {};
+      return `
+        <li class="credit">
+          <img src="${ph.mini}" alt="">
+          <div>
+            ${ph.titre ? `<span class="credit-titre">${echap(ph.titre)}</span>` : ""}
+            <span>Auteur : ${echap(c.auteur || "inconnu")}</span>
+            ${c.licence ? `<span>Licence : ${lien(c.licence_url, c.licence)}</span>` : ""}
+            ${c.source ? `<span>${lien(c.source, "Voir l'original")}</span>` : ""}
+          </div>
+        </li>`;
+    }).join("");
+    app.innerHTML = `
+      <div class="page">
+        <header class="barre">
+          <a class="btn btn-retour" href="${lienPack(pk.id)}">← ${echap(pk.titre)}</a>
+          <h1>Crédits</h1>
+        </header>
+        <ul class="credits">${lignes}</ul>
+        <p class="vers-biblio">Liste complète : <a href="https://www.stansgames.fr/jeux-tablette/credits" target="_blank" rel="noopener">stansgames.fr/jeux-tablette/credits</a></p>
+      </div>`;
+  }
+
+  // « + » : packs à télécharger, et création d'un pack avec ses photos.
+  function ecranAjoutPZ() {
+    ecranCatalogue({
+      titre: "Ajouter des images",
+      retour: ["#/puzzle", "← Packs"],
+      sections: [{ type: "images", titre: "Packs à télécharger", unite: (n) => n + (n > 1 ? " images" : " image") }],
+      avant: `
+        <h2 class="section-titre">Mes photos</h2>
+        <a class="biblio-carte pz-mes-photos" href="#/ajouter-photo">
+          <div class="biblio-vignette"><span>＋</span></div>
+          <div class="biblio-corps">
+            <span class="biblio-titre">Créer un pack avec mes photos</span>
+            <span class="biblio-desc">Depuis les photos de la tablette${window.GooglePhotos.disponible ? " ou Google Photos" : ""}. Elles sont rangées par 12 dans «&nbsp;Mes&nbsp;images&nbsp;».</span>
+          </div>
+        </a>`,
+      ouvrir: (el) => lienPack(el.id),
+    });
   }
 
   // ---------- Ajout d'une photo personnelle ----------
   // Source : Google Photos ou les photos de la tablette ; puis recadrage au format du puzzle (2:3).
   // La photo est réencodée : ses métadonnées (lieu, appareil, date) ne sont pas conservées.
-  function ecranAjoutPhoto() {
+  // cible : pack « Mes images » à compléter en priorité (facultatif).
+  let packCible = null;
+  function ecranAjoutPhoto(cible) {
+    if (cible !== undefined) packCible = cible || null;
     vider();
     document.title = "Ajouter une photo";
     const gp = window.GooglePhotos.disponible;
     app.innerHTML = `
       <div class="page">
         <header class="barre">
-          <a class="btn btn-retour" href="#/puzzle">← Puzzle</a>
-          <h1>Ajouter une photo</h1>
+          <a class="btn btn-retour" href="${packCible ? lienPack(packCible) : "#/puzzle-ajouter"}">← Retour</a>
+          <h1>Mes photos</h1>
         </header>
         <div class="ajout">
           <p class="ajout-texte">Où se trouvent les photos ?</p>
@@ -368,11 +475,12 @@
   // Recadre les photos choisies l'une après l'autre (on peut en choisir plusieurs d'un coup,
   // pour ne pas revenir sans cesse dans la galerie). `ajoutees` : photos déjà enregistrées.
   // Le recadrage s'affiche sans changer d'adresse.
+  let dernierPack = null;
   async function recadrerSuite(liste, i, ajoutees) {
     if (i >= liste.length) {
       if (ajoutees) {
         toast(ajoutees > 1 ? `${ajoutees} photos ajoutées.` : "Photo ajoutée.");
-        location.hash = "#/puzzle";
+        location.hash = dernierPack ? lienPack(dernierPack) : "#/puzzle";
       } else ecranAjoutPhoto();
       return;
     }
@@ -399,7 +507,7 @@
           const l = Math.max(640, Math.min(cible, rect.w));
           const image = await encoder(bmp, rect, l, Math.round(l * 1.5), 0.86);
           const vignette = await encoder(bmp, rect, 320, 480, 0.8);
-          await window.Bibliotheque.ajouterPhoto({ image, vignette });
+          dernierPack = await window.Bibliotheque.ajouterPhoto({ image, vignette, pack: packCible });
           ok = true;
         } catch (e) {
           toast("La photo n'a pas pu être enregistrée.", 5000);
@@ -421,31 +529,40 @@
       .then((b) => { if (!b) throw new Error("encodage"); return b; });
   }
 
-  function ecranJeuPZ(id) {
-    const p = photos().find((x) => x.id === id);
-    if (!p) { location.hash = "#/puzzle"; return; }
+  function ecranJeuPZ(idPack, id) {
+    const pk = packs().find((x) => x.id === idPack);
+    const p = pk && pk.photos.find((x) => x.id === id);
+    if (!p) { location.hash = pk ? lienPack(idPack) : "#/puzzle"; return; }
     vider();
     document.title = "Puzzle";
-    nettoyage = window.Puzzle.ouvrir(app, p, photos());
+    nettoyage = window.Puzzle.ouvrir(app, p, pk.photos, lienPack(idPack));
   }
 
   // ---------- Bibliothèque ----------
   const mo = (o) => (o >= 1e6 ? (o / 1e6).toLocaleString("fr-FR", { maximumFractionDigits: 1 }) + " Mo" : Math.max(1, Math.round(o / 1e3)) + " Ko");
+  // La Bibliothèque ne propose plus que les grilles : les images s'ajoutent depuis le Puzzle.
   const SECTIONS = [
-    { type: "images", titre: "Images pour le puzzle", unite: (n) => n + (n > 1 ? " images" : " image") },
     { type: "chasse-croise", titre: "Grilles de chassé-croisé", unite: (n) => n + (n > 1 ? " grilles" : " grille") },
     { type: "mots-codes", titre: "Grilles de mots codés", unite: (n) => n + (n > 1 ? " grilles" : " grille") },
   ];
 
-  async function ecranBibliotheque() {
+  function ecranBibliotheque() {
+    ecranCatalogue({ titre: "Bibliothèque", retour: ["#/", "← Accueil"], sections: SECTIONS });
+  }
+
+  // Liste des contenus du serveur pour les types de `sections`, avec leur état sur la tablette.
+  // `avant` : HTML affiché en tête ; `ouvrir(el)` : lien vers un contenu installé.
+  async function ecranCatalogue({ titre, retour, sections, avant, ouvrir }) {
+    const SECTIONS = sections;
     vider();
-    document.title = "Bibliothèque";
+    document.title = titre;
     app.innerHTML = `
       <div class="page">
         <header class="barre">
-          <a class="btn btn-retour" href="#/">← Accueil</a>
-          <h1>Bibliothèque</h1>
+          <a class="btn btn-retour" href="${retour[0]}">${retour[1]}</a>
+          <h1>${echap(titre)}</h1>
         </header>
+        ${avant || ""}
         <p class="biblio-attente">Chargement…</p>
       </div>`;
     const ecran = app.firstElementChild;
@@ -455,7 +572,7 @@
     // Éléments du serveur, puis éléments installés qui n'y figurent plus.
     const connus = (index ? index.elements : []).filter((e) => SECTIONS.some((s) => s.type === e.type));
     const ids = new Set(connus.map((e) => e.id));
-    const liste = [...connus, ...[...installes.values()].filter((e) => !ids.has(e.id) && !e.local)];
+    const liste = [...connus, ...[...installes.values()].filter((e) => !ids.has(e.id) && !e.local && SECTIONS.some((s) => s.type === e.type))];
     const enCours = new Set();
 
     const carte = (el, sec) => {
@@ -474,7 +591,7 @@
       } else {
         const maj = enLigne && !horsLigne && el.version > inst.version;
         actions = (maj ? `<button class="btn btn-principal" data-act="installer" data-id="${echap(el.id)}">Mettre à jour</button>`
-          : `<span class="biblio-etat ok">✓ Sur la tablette</span>`)
+          : (ouvrir ? `<a class="btn btn-principal" href="${ouvrir(el)}">Ouvrir</a>` : `<span class="biblio-etat ok">✓ Sur la tablette</span>`))
           + `<button class="btn btn-discret" data-act="supprimer" data-id="${echap(el.id)}">Retirer</button>`;
       }
       const vignette = el.vignette && !horsLigne ? `<img src="${echap(el.vignette)}" alt="" loading="lazy">` : "";
@@ -544,12 +661,15 @@
     const parts = h.split("/").filter(Boolean).map(decodeURIComponent);
     if (parts[0] === "chasse-croise" && parts[1]) ecranJeuCC(parts[1]);
     else if (parts[0] === "chasse-croise") ecranListeCC();
-    else if (parts[0] === "puzzle" && parts[1]) ecranJeuPZ(parts[1]);
-    else if (parts[0] === "puzzle") ecranListePZ();
+    else if (parts[0] === "puzzle" && parts[2] === "credits") ecranCreditsPZ(parts[1]);
+    else if (parts[0] === "puzzle" && parts[2]) ecranJeuPZ(parts[1], parts[2]);
+    else if (parts[0] === "puzzle" && parts[1]) ecranPackPZ(parts[1]);
+    else if (parts[0] === "puzzle") ecranAccueilPZ();
+    else if (parts[0] === "puzzle-ajouter") ecranAjoutPZ();
     else if (parts[0] === "mots-codes" && parts[1]) ecranJeuMC(parts[1]);
     else if (parts[0] === "mots-codes") ecranListeMC();
     else if (parts[0] === "bibliotheque") ecranBibliotheque();
-    else if (parts[0] === "ajouter-photo") ecranAjoutPhoto();
+    else if (parts[0] === "ajouter-photo") ecranAjoutPhoto(parts[1] || "");
     else ecranPortail();
     window.scrollTo(0, 0);
   }

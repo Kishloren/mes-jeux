@@ -1,6 +1,6 @@
 // Service worker : l'application fonctionne hors connexion.
 // Changer VERSION à chaque mise en ligne pour forcer la mise à jour.
-const VERSION = "mes-jeux-v21";
+const VERSION = "mes-jeux-v22";
 const FICHIERS = [
   "./",
   "index.html",
@@ -15,6 +15,8 @@ const FICHIERS = [
   "js/data-mots-codes.js",
   "js/mots-codes.js",
   "js/recadrage.js",
+  "js/couverture.js",
+  "fonts/DejaVuSerif-Bold-latin.woff2",
   "js/google-photos.js",
   "icons/icon-192.png",
   "icons/icon-512.png",

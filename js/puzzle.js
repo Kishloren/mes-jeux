@@ -178,7 +178,8 @@
   }
 
   // ---------- Écran de jeu ----------
-  function ouvrir(racine, photo, photos) {
+  // photos : les images du même pack ; base : adresse du pack (« #/puzzle/<pack> »).
+  function ouvrir(racine, photo, photos, base) {
     let st = UI.Store.get(cle(photo), null);
     const nouveau = (r) => {
       const t = tirage(r);
@@ -197,7 +198,7 @@
     racine.innerHTML = `
       <div class="pz">
         <header class="barre pz-barre">
-          <a class="btn btn-retour" href="#/puzzle">← Retour</a>
+          <a class="btn btn-retour" href="${base}">← Retour</a>
           <span class="espace"></span>
           <button class="btn pz-btn-partie" data-act="partie"></button>
           <button class="btn" data-act="modele">Modèle</button>
@@ -595,9 +596,9 @@
             titre: "Bravo ! Puzzle terminé",
             html: `<p>Terminé en <b>${st.m}</b> coup${st.m > 1 ? "s" : ""}.</p><p>${UI.echap(niveau(st.niv).nom)} — ${UI.echap(libelle(st))}</p>`,
             boutons: [
-              { label: "Image suivante", classe: "btn-principal", action: () => { location.hash = "#/puzzle/" + suivante.id; } },
+              { label: "Image suivante", classe: "btn-principal", action: () => { location.hash = base + "/" + encodeURIComponent(suivante.id); } },
               { label: "Rejouer cette image", action: () => recommencer(reglages()) },
-              { label: "Retour aux images", action: () => { location.hash = "#/puzzle"; } },
+              { label: "Retour aux images", action: () => { location.hash = base; } },
             ],
           });
         }, 900);

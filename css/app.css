@@ -466,3 +466,29 @@ button { font: inherit; color: inherit; }
 .rc-s { left: 50%; top: 100%; cursor: ns-resize; }
 .rc-sw { left: 0; top: 100%; cursor: nesw-resize; }
 .rc-w { left: 0; top: 50%; cursor: ew-resize; }
+
+/* ---------- Puzzle : packs ---------- */
+.btn-plus { font-size: 30px !important; font-weight: 700; min-width: 56px; padding: 0 !important; }
+.pz-packs {
+  display: grid; grid-template-columns: repeat(auto-fill, minmax(190px, 1fr)); gap: 20px;
+  padding: 16px; max-width: 1100px; margin: 0 auto;
+}
+.pz-pack { display: flex; flex-direction: column; gap: 8px; text-decoration: none; color: var(--bleu-fonce); }
+.pz-pack:active { transform: scale(0.97); }
+.pz-pack-couv {
+  display: block; aspect-ratio: 2 / 3; border-radius: 12px; overflow: hidden; background: #18232b;
+  box-shadow: 0 4px 12px rgba(31, 95, 168, 0.25);
+}
+.pz-pack-couv img { width: 100%; height: 100%; display: block; }
+.pz-pack-sans { display: flex; height: 100%; align-items: center; justify-content: center; padding: 12px; color: #f6efe2; font: bold 26px Georgia, serif; text-align: center; }
+.pz-pack-etat { text-align: center; font-size: 18px; font-weight: 600; }
+.pz-pack.fini .pz-pack-etat { color: var(--revele); }
+.pz-pied { text-align: center; margin: 8px 0 32px; }
+.pz-mes-photos { text-decoration: none; color: inherit; }
+.pz-mes-photos .biblio-vignette { display: flex; align-items: center; justify-content: center; background: #fff; border: 3px dashed var(--bleu); color: var(--bleu-fonce); font-size: 48px; font-weight: 700; }
+.credits { list-style: none; margin: 0 auto; padding: 16px; max-width: 900px; display: flex; flex-direction: column; gap: 14px; }
+.credit { display: flex; gap: 16px; align-items: flex-start; background: #fff; border-radius: 12px; padding: 12px; font-size: 18px; }
+.credit img { width: 80px; aspect-ratio: 2 / 3; border-radius: 6px; flex: none; object-fit: cover; }
+.credit div { display: flex; flex-direction: column; gap: 4px; min-width: 0; overflow-wrap: anywhere; }
+.credit-titre { font-weight: 700; color: var(--bleu-fonce); }
+.credit a { color: var(--bleu); text-decoration: underline; font-weight: 600; }
