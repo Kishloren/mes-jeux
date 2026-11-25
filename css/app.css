@@ -677,3 +677,4 @@ button { font: inherit; color: inherit; }
   display: flex; align-items: center; justify-content: center; border-radius: 10px;
   background: #ffd43b; color: #7a1d00; font-size: 38px; font-weight: 800; box-shadow: 0 8px 18px rgba(0,0,0,.3);
 }
+.am-def-texte .pose { color: #d9c3ad; }

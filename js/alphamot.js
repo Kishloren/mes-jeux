@@ -155,8 +155,18 @@
     function libelle(i, grand) {
       const d = mots[i].d;
       const n = mots[i].cases.length;
-      const texte = d.indice === "**" ? "Mot de 2 lettres" : d.indice;
-      return `<span class="am-def-fl">${fleche(d.fleche)}</span><span class="${grand ? "am-def-texte" : "am-def-autre"}">${UI.echap(texte)}</span>`
+      let texte = d.indice === "**" ? "Mot de 2 lettres" : UI.echap(d.indice);
+      // Mot en cours : les lettres de l'indice déjà placées dans le mot sont atténuées
+      // (une occurrence par lettre placée, juste ou non).
+      if (grand && d.indice !== "**") {
+        const posees = {};
+        mots[i].cases.forEach((k) => { if (lettres[k]) posees[lettres[k]] = (posees[lettres[k]] || 0) + 1; });
+        texte = [...d.indice].map((ch) => {
+          if (posees[ch]) { posees[ch]--; return `<span class="pose">${ch}</span>`; }
+          return ch;
+        }).join("");
+      }
+      return `<span class="am-def-fl">${fleche(d.fleche)}</span><span class="${grand ? "am-def-texte" : "am-def-autre"}">${texte}</span>`
         + `<span class="am-def-n">${n} lettres</span>`;
     }
 
