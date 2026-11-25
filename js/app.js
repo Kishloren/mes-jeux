@@ -2,7 +2,7 @@
 (function () {
   "use strict";
 
-  const VERSION_APP = "27"; // à incrémenter avec VERSION dans sw.js
+  const VERSION_APP = "28"; // à incrémenter avec VERSION dans sw.js
 
   const Store = {
     get(cle, defaut) {
@@ -111,6 +111,12 @@
             </span>
             <span class="tuile-nom">Mot mystérieux</span>
           </a>
+          <a class="tuile" href="#/alphamot">
+            <span class="tuile-icone tuile-am" aria-hidden="true">
+              <span><small>AEIST</small></span><span>A</span><span>T</span><span>S</span>
+            </span>
+            <span class="tuile-nom">Alphamot</span>
+          </a>
           <a class="tuile" href="#/puzzle">
             <span class="tuile-icone ${p ? "tuile-puzzle" : ""}" aria-hidden="true">${icPuzzle}</span>
             <span class="tuile-nom">Puzzle</span>
@@ -204,6 +210,25 @@
           </a>`, entamee: p.trouves > 0 };
       },
       raz: "Tous les mots trouvés dans cette grille seront effacés.",
+    },
+    alphamot: {
+      nom: "Alphamot",
+      motif: "am",
+      module: () => window.Alphamot,
+      fini: (g) => window.Alphamot.progression(g).fini,
+      carte(g, href) {
+        const p = window.Alphamot.progression(g);
+        let etat, classe = "";
+        if (p.fini) { etat = "Terminée ✓"; classe = "finie"; }
+        else if (!p.remplies) etat = "Pas encore commencée";
+        else etat = `En cours : ${Math.round((100 * p.remplies) / p.total)} %`;
+        return { html: `<a class="carte ${classe}" href="${href}">
+            <span class="carte-nom">${echap(g.nom)}</span>
+            <span class="carte-etat">${etat}</span>
+            <span class="barre-prog"><span style="width:${(100 * p.remplies) / p.total}%"></span></span>
+          </a>`, entamee: p.remplies > 0 };
+      },
+      raz: "Toutes les lettres de cette grille seront effacées.",
     },
   };
   const lienJeu = (type, ...ids) => "#/" + [type, ...ids.map(encodeURIComponent)].join("/");

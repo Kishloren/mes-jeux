@@ -114,7 +114,15 @@
       ctx.fillStyle = plein ? "#1B324B" : "#FFFDF8"; ctx.fill();
       if (!plein) { ctx.strokeStyle = "#C8843F"; ctx.lineWidth = 2; ctx.stroke(); }
     };
-    if (motif === "mm") {
+    if (motif === "am") {
+      // Case définition (anagramme) et sa flèche, suivie des cases du mot.
+      ctx.fillStyle = "#F0C9A0"; rect(84, 330, 62, 62, 6); ctx.fill();
+      ctx.fillStyle = "#1B324B"; ctx.font = police(15); ctx.fillText("AEISTT", 115, 366);
+      for (let j = 0; j < 4; j++) { rect(152 + j * 62, 330, 56, 62, 6); ctx.fillStyle = "#FFFDF8"; ctx.fill(); ctx.strokeStyle = "#C8843F"; ctx.lineWidth = 2; ctx.stroke(); }
+      ctx.font = police(34); ctx.fillStyle = "#1B324B";
+      ["T", "I", "S", "E"].forEach((l, j) => ctx.fillText(l, 180 + j * 62, 374));
+      ctx.fillStyle = "#C8843F"; ctx.beginPath(); ctx.moveTo(146, 352); ctx.lineTo(152, 361); ctx.lineTo(146, 370); ctx.fill();
+    } else if (motif === "mm") {
       // Petite grille de lettres barrée d'un trait, comme un mot trouvé.
       const lettres = "MOTSCACHESTROUVERLIRE";
       ctx.font = police(26);

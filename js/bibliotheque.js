@@ -17,6 +17,7 @@
     "chasse-croise": ["mes-jeux-carnet-cc"],
     "mots-codes": ["mes-jeux-carnet-mc", "mes-jeux-pack-mots-codes"],
     "mot-mysterieux": ["mes-jeux-pack-mot-mysterieux"],
+    alphamot: ["mes-jeux-pack-alphamot"],
   };
 
   // ---------- IndexedDB ----------
@@ -238,6 +239,13 @@
         .map(versInterne)
         .filter((g) => window.ChasseCroise.valider(g).length === 0)
         .map((g) => ({ id: g.id, jeu: "cc", grille: g, carnet: m.titre }));
+      progres(1, 1);
+    } else if (el.type === "alphamot") {
+      progres(0, 1);
+      nouveaux = m.grilles
+        .map((g) => ({ id: g.id, nom: g.titre, niveau: g.niveau, solution: g.solution, definitions: g.definitions }))
+        .filter((g) => window.Alphamot.valider(g).length === 0)
+        .map((g) => ({ id: g.id, jeu: "am", grille: g, carnet: m.titre }));
       progres(1, 1);
     } else if (el.type === "mot-mysterieux") {
       progres(0, 1);
