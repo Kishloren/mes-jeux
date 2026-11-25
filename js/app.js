@@ -2,7 +2,7 @@
 (function () {
   "use strict";
 
-  const VERSION_APP = "26"; // à incrémenter avec VERSION dans sw.js
+  const VERSION_APP = "27"; // à incrémenter avec VERSION dans sw.js
 
   const Store = {
     get(cle, defaut) {
@@ -105,6 +105,12 @@
             </span>
             <span class="tuile-nom">Mots codés</span>
           </a>
+          <a class="tuile" href="#/mot-mysterieux">
+            <span class="tuile-icone tuile-mm" aria-hidden="true">
+              <span>M</span><span>O</span><span>T</span><span>S</span>
+            </span>
+            <span class="tuile-nom">Mot mystérieux</span>
+          </a>
           <a class="tuile" href="#/puzzle">
             <span class="tuile-icone ${p ? "tuile-puzzle" : ""}" aria-hidden="true">${icPuzzle}</span>
             <span class="tuile-nom">Puzzle</span>
@@ -179,6 +185,25 @@
           </a>`, entamee: p.fini || p.trouves > g.devoiles.length };
       },
       raz: "Toutes les lettres trouvées dans cette grille seront effacées.",
+    },
+    "mot-mysterieux": {
+      nom: "Mot mystérieux",
+      motif: "mm",
+      module: () => window.MotMysterieux,
+      fini: (g) => window.MotMysterieux.progression(g).fini,
+      carte(g, href) {
+        const p = window.MotMysterieux.progression(g);
+        let etat, classe = "";
+        if (p.fini) { etat = `Terminée ✓ — ${echap(g.mystere)}`; classe = "finie"; }
+        else if (!p.trouves) etat = `${p.total} mots à trouver`;
+        else etat = `${p.trouves} mots sur ${p.total}`;
+        return { html: `<a class="carte ${classe}" href="${href}">
+            <span class="carte-nom">${echap(g.nom)}</span>
+            <span class="carte-etat">${etat}</span>
+            <span class="barre-prog"><span style="width:${(100 * p.trouves) / p.total}%"></span></span>
+          </a>`, entamee: p.trouves > 0 };
+      },
+      raz: "Tous les mots trouvés dans cette grille seront effacés.",
     },
   };
   const lienJeu = (type, ...ids) => "#/" + [type, ...ids.map(encodeURIComponent)].join("/");

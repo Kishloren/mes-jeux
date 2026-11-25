@@ -114,7 +114,17 @@
       ctx.fillStyle = plein ? "#1B324B" : "#FFFDF8"; ctx.fill();
       if (!plein) { ctx.strokeStyle = "#C8843F"; ctx.lineWidth = 2; ctx.stroke(); }
     };
-    if (motif === "mc") {
+    if (motif === "mm") {
+      // Petite grille de lettres barrée d'un trait, comme un mot trouvé.
+      const lettres = "MOTSCACHESTROUVERLIRE";
+      ctx.font = police(26);
+      for (let i = 0; i < 5; i++) for (let j = 0; j < 5; j++) {
+        ctx.fillStyle = "#1B324B";
+        ctx.fillText(lettres[(i * 5 + j) % lettres.length], 148 + j * 46, 340 + i * 46);
+      }
+      ctx.strokeStyle = "rgba(200, 132, 63, 0.55)"; ctx.lineWidth = 34; ctx.lineCap = "round";
+      ctx.beginPath(); ctx.moveTo(148, 330); ctx.lineTo(148 + 4 * 46, 330 + 4 * 46); ctx.stroke();
+    } else if (motif === "mc") {
       for (let i = 0; i < 5; i++) for (let j = 0; j < 5; j++) carre(130 + j * 46, 300 + i * 46, 40, i === j);
     } else {
       ctx.fillStyle = "#C8843F";

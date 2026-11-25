@@ -16,6 +16,7 @@
     images: ["mes-jeux-pack-images"],
     "chasse-croise": ["mes-jeux-carnet-cc"],
     "mots-codes": ["mes-jeux-carnet-mc", "mes-jeux-pack-mots-codes"],
+    "mot-mysterieux": ["mes-jeux-pack-mot-mysterieux"],
   };
 
   // ---------- IndexedDB ----------
@@ -96,7 +97,7 @@
       grilles: e.type !== "images" ? (e.contenu || []).map((id) => grParId.get(id)).filter(Boolean) : [],
       get couverture() { return e.couverture ? urlDe(e.couverture) : null; },
     }));
-    etat.grilles = grilles.filter((g) => g.jeu !== "mc").map(enClair);
+    etat.grilles = grilles.filter((g) => g.jeu === "cc").map(enClair);
     etat.motsCodes = grilles.filter((g) => g.jeu === "mc").map(enClair);
   }
 
@@ -237,6 +238,13 @@
         .map(versInterne)
         .filter((g) => window.ChasseCroise.valider(g).length === 0)
         .map((g) => ({ id: g.id, jeu: "cc", grille: g, carnet: m.titre }));
+      progres(1, 1);
+    } else if (el.type === "mot-mysterieux") {
+      progres(0, 1);
+      nouveaux = m.grilles
+        .map((g) => ({ id: g.id, nom: g.titre, theme: g.theme, niveau: g.niveau, lignes: g.lignes, mots: g.mots, placements: g.placements, mystere: g.mystere }))
+        .filter((g) => window.MotMysterieux.valider(g).length === 0)
+        .map((g) => ({ id: g.id, jeu: "mm", grille: g, carnet: m.titre }));
       progres(1, 1);
     } else {
       progres(0, 1);

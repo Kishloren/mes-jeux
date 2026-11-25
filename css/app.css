@@ -510,3 +510,51 @@ button { font: inherit; color: inherit; }
   font-size: 24px; font-weight: 700; cursor: pointer;
 }
 .grille-raz:active { background: var(--bleu-clair); }
+
+/* ---------- Mot mystérieux ---------- */
+.mm { height: 100%; height: 100dvh; display: flex; flex-direction: column; overflow: hidden; --mm: 40px; }
+.mm .barre { padding: 4px 10px; gap: 8px; }
+.mm-zone { flex: 1; min-height: 0; display: flex; align-items: center; justify-content: center; padding: 6px; }
+.mm-plateau { position: relative; touch-action: none; user-select: none; -webkit-user-select: none; }
+.mm-grille {
+  display: grid; background: #fff; border: 2px solid var(--noir); border-radius: 6px;
+}
+.mm-case {
+  width: var(--mm); height: var(--mm); display: flex; align-items: center; justify-content: center;
+  font-size: calc(var(--mm) * 0.62); font-weight: 700; color: var(--encre); line-height: 1;
+}
+.mm-case.depart { background: var(--sel); border-radius: 50%; box-shadow: inset 0 0 0 3px #e67700; }
+.mm-case.reste { background: #fff3bf; color: #c92a2a; }
+.mm-traits {
+  position: absolute; inset: 2px; width: calc(100% - 4px); height: calc(100% - 4px);
+  pointer-events: none; mix-blend-mode: multiply; overflow: visible;
+}
+.mm-traits line { stroke-linecap: round; stroke-width: 0.74; fill: none; }
+.mm-trouve { opacity: 0.6; }
+.mm-sel { stroke: #ffd43b; opacity: 0.75; }
+.mm-sel.rate { stroke: #ff8787; transition: opacity 0.4s; opacity: 0; }
+.mm-aide { stroke: #1f5fa8; opacity: 0.35; stroke-dasharray: 0.3 0.25; }
+.mm-mystere {
+  display: flex; align-items: center; justify-content: center; gap: 12px; flex-wrap: wrap;
+  padding: 6px 10px; background: #fff; border-top: 2px solid var(--bleu-clair);
+}
+.mm-mystere-titre { font-size: 17px; font-weight: 700; color: var(--bleu-fonce); }
+.mm-lettres { display: flex; gap: 3px; }
+.mm-lettres span {
+  width: 30px; height: 36px; border: 2px solid var(--bleu); border-radius: 6px; background: var(--fond);
+  display: flex; align-items: center; justify-content: center; font-size: 22px; font-weight: 700; color: #c92a2a;
+}
+.mm-compte { font-size: 16px; color: var(--gris); }
+.mm-mots {
+  list-style: none; margin: 0; padding: 8px 12px 12px;
+  display: grid; grid-template-columns: repeat(auto-fill, minmax(118px, 1fr)); gap: 2px 8px;
+  max-height: 36vh; overflow-y: auto; background: #fff; flex: none;
+}
+.mm-mots li { font-size: 17px; font-weight: 600; letter-spacing: 0.02em; padding: 2px 6px; border-radius: 6px; color: var(--encre); }
+.mm-mots li.trouve { text-decoration: line-through; text-decoration-thickness: 2px; color: var(--gris); background: color-mix(in srgb, var(--c) 45%, white); }
+.mm-mots li.vient { outline: 3px solid var(--c); }
+.mm-mots li.aide { background: var(--bleu-clair); }
+.mm.termine .mm-grille { border-color: var(--revele); }
+.mm-reponse { font-size: 32px; font-weight: 800; letter-spacing: 0.08em; color: #c92a2a; text-align: center; }
+.tuile-mm span { border-radius: 50%; }
+.tuile-mm span:nth-child(1), .tuile-mm span:nth-child(4) { background: #ffd43b; }
