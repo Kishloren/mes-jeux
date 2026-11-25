@@ -647,3 +647,32 @@ button { font: inherit; color: inherit; }
 .mm.biffage .mm-trouve { stroke: #1d2733 !important; stroke-width: 0.06; opacity: 0.85; }
 .mm.biffage .mm-mots li.trouve { background: none; color: #8a94a3; }
 .mm.biffage .mm-mots li.vient { outline-color: #1d2733; }
+
+/* ---------- Mot mystérieux : seconde phase (former le mot avec les lettres restantes) ---------- */
+.mm.phase2 .mm-mots { display: none; }
+.mm.phase2 .mm-case { color: #c5ccd6; }
+.mm.phase2 .mm-trouve { opacity: 0.25; }
+.mm.phase2 .mm-case.reste {
+  color: #7a1d00; background: #ffd43b; border-radius: 8px; box-shadow: 0 2px 0 #e0a800; cursor: grab;
+  transform: scale(0.92);
+}
+.mm.phase2 .mm-case.reste.choisie { background: #ff922b; color: #fff; box-shadow: 0 0 0 3px #e8590c; }
+.mm.phase2 .mm-case.reste.utilisee { background: #eef1f5; color: #c5ccd6; box-shadow: none; cursor: default; }
+.mm.phase2 .mm-mystere { flex-direction: column; gap: 8px; padding: 10px 12px 16px; }
+.mm-consigne { margin: 0; font-size: 19px; font-weight: 600; color: var(--bleu-fonce); text-align: center; }
+.mm-cible { gap: 5px; touch-action: none; }
+.mm-cible .mm-boite {
+  width: var(--bx, 40px); height: calc(var(--bx, 40px) * 1.2); border: 3px dashed var(--bleu); border-radius: 8px;
+  background: #fff; display: flex; align-items: center; justify-content: center;
+  font-size: calc(var(--bx, 40px) * 0.62); font-weight: 800; color: #7a1d00; touch-action: none; user-select: none;
+}
+.mm-cible .mm-boite.pleine { border-style: solid; background: #ffd43b; cursor: grab; }
+.mm-cible .mm-boite.aidee { background: #8ce99a; }
+.mm-cible.faux .mm-boite { border-color: var(--err); animation: mm-non 0.4s; }
+@keyframes mm-non { 25% { transform: translateX(-4px); } 75% { transform: translateX(4px); } }
+.mm.termine .mm-cible .mm-boite { background: #b2f2bb; border-color: var(--revele); color: #1b5e20; }
+.mm-volante {
+  position: fixed; z-index: 50; width: 56px; height: 64px; margin: -40px 0 0 -28px; pointer-events: none;
+  display: flex; align-items: center; justify-content: center; border-radius: 10px;
+  background: #ffd43b; color: #7a1d00; font-size: 38px; font-weight: 800; box-shadow: 0 8px 18px rgba(0,0,0,.3);
+}

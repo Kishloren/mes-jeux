@@ -2,7 +2,7 @@
 (function () {
   "use strict";
 
-  const VERSION_APP = "31"; // à incrémenter avec VERSION dans sw.js
+  const VERSION_APP = "32"; // à incrémenter avec VERSION dans sw.js
 
   const Store = {
     get(cle, defaut) {
@@ -248,6 +248,7 @@
         const p = window.MotMysterieux.progression(g);
         let etat, classe = "";
         if (p.fini) { etat = `Terminée ✓ — ${echap(g.mystere)}`; classe = "finie"; }
+        else if (p.mots) etat = "Reste le mot mystérieux";
         else if (!p.trouves) etat = `${p.total} mots à trouver`;
         else etat = `${p.trouves} mots sur ${p.total}`;
         return { html: `<a class="carte ${classe}" href="${href}">

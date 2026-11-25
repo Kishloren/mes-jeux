@@ -1,5 +1,6 @@
 // Mot mystérieux : retrouver dans la grille les mots de la liste, dans les 8 directions.
-// Les lettres qui restent, lues ligne par ligne, forment le mot mystérieux.
+// Les lettres qui restent forment le mot mystérieux, dans le désordre : une fois tous les
+// mots trouvés, le joueur les fait glisser dans les cases du mot pour le reconstituer.
 // Grille (format interne) : { id, nom, theme, niveau, lignes: ["ABC…"], mots: ["…"],
 //   placements: [{ mot, x, y, dx, dy }], mystere }
 (function () {
@@ -26,7 +27,9 @@
       }
       let reste = "";
       L.forEach((l, y) => [...l].forEach((ch, x) => { if (!couvertes.has(y * C + x)) reste += ch; }));
-      if (!g.mystere || reste !== g.mystere) err.push("mot mystérieux");
+      // Les lettres restantes sont celles du mot mystérieux, dans n'importe quel ordre.
+      const trie = (t) => [...t].sort().join("");
+      if (!g.mystere || trie(reste) !== trie(g.mystere)) err.push("mot mystérieux");
     } catch (e) {
       err.push("grille illisible");
     }
@@ -34,14 +37,34 @@
   }
 
   const cle = (g) => "mm-" + g.id;
+  // Cases non couvertes par les mots, dans l'ordre de lecture.
+  function restantes(g) {
+    const C = g.lignes[0].length;
+    const couvertes = new Set();
+    g.placements.forEach((p) => { for (let k = 0; k < p.mot.length; k++) couvertes.add((p.y + k * p.dy) * C + p.x + k * p.dx); });
+    const r = [];
+    g.lignes.forEach((l, y) => [...l].forEach((ch, x) => { if (!couvertes.has(y * C + x)) r.push(y * C + x); }));
+    return r;
+  }
+  // État : t = mots trouvés ; p = pour chaque case du mot mystérieux, la case de la grille
+  // dont la lettre y a été placée (ou null) ; f = grille finie (mot mystérieux reconstitué).
   function charger(g) {
     const s = UI.Store.get(cle(g), null);
     const t = new Set((s && Array.isArray(s.t) ? s.t : []).filter((i) => Number.isInteger(i) && i >= 0 && i < g.placements.length));
-    return { trouves: t, fini: !!(s && s.f) && t.size === g.placements.length };
+    const reste = new Set(restantes(g));
+    const vus = new Set();
+    const place = Array.from({ length: g.mystere.length }, (_, b) => {
+      const k = s && Array.isArray(s.p) ? s.p[b] : null;
+      if (!Number.isInteger(k) || !reste.has(k) || vus.has(k)) return null;
+      vus.add(k);
+      return k;
+    });
+    return { trouves: t, place, fini: !!(s && s.f) && t.size === g.placements.length };
   }
   function progression(g) {
     const st = charger(g);
-    return { trouves: st.trouves.size, total: g.placements.length, fini: st.fini };
+    const total = g.placements.length;
+    return { trouves: st.trouves.size, total, mots: st.trouves.size === total, fini: st.fini };
   }
   function reinitialiser(g) { UI.Store.del(cle(g)); }
 
@@ -49,8 +72,13 @@
   function ouvrir(racine, g, base = "#/mot-mysterieux") {
     const R = g.lignes.length, C = g.lignes[0].length;
     const st = charger(g);
-    const trouves = st.trouves;
-    const sauver = () => UI.Store.set(cle(g), { t: [...trouves], f: trouves.size === g.placements.length });
+    const { trouves, place } = st;
+    const reste = restantes(g);
+    const lettreDe = (k) => g.lignes[Math.floor(k / C)][k % C];
+    const tousTrouves = () => trouves.size === g.placements.length;
+    const motForme = () => place.map((k) => (k === null ? " " : lettreDe(k))).join("");
+    const resolu = () => tousTrouves() && motForme() === g.mystere;
+    const sauver = () => UI.Store.set(cle(g), { t: [...trouves], p: place, f: resolu() });
     // Ordre d'affichage de la liste : alphabétique (indices des placements).
     const ordre = g.placements.map((p, i) => i).sort((a, b) => g.placements[a].mot.localeCompare(g.placements[b].mot, "fr"));
     const couleur = (i) => COULEURS[i % COULEURS.length];
@@ -118,17 +146,31 @@
         li.style.setProperty("--c", couleur(i));
       });
       const total = g.placements.length;
-      const fini = trouves.size === total;
+      const phase2 = tousTrouves(), fini = resolu();
+      elMM.classList.toggle("phase2", phase2);
       elMM.classList.toggle("termine", fini);
-      // Mot mystérieux : cases vides tant que tous les mots ne sont pas trouvés.
-      if (fini) {
-        const couvertes = new Set();
-        g.placements.forEach((p) => { for (let k = 0; k < p.mot.length; k++) couvertes.add((p.y + k * p.dy) * C + p.x + k * p.dx); });
-        elCases.forEach((c, k) => c.classList.toggle("reste", !couvertes.has(k)));
+      // Seconde phase : les lettres restantes sont mises en avant ; celles déjà placées
+      // dans le mot mystérieux sont estompées.
+      const utilisees = new Set(place.filter((k) => k !== null));
+      const setReste = new Set(reste);
+      elCases.forEach((c, k) => {
+        c.classList.toggle("reste", phase2 && setReste.has(k));
+        c.classList.toggle("utilisee", phase2 && utilisees.has(k));
+        c.classList.toggle("choisie", choisie === k);
+      });
+      const cases = [...g.mystere].map((ch, b) => {
+        const k = place[b];
+        return `<span class="mm-boite${k !== null ? " pleine" : ""}" data-b="${b}">${k !== null ? lettreDe(k) : ""}</span>`;
+      }).join("");
+      if (!phase2) {
+        elMystere.innerHTML = `<span class="mm-mystere-titre">Mot mystérieux</span><span class="mm-lettres">${[...g.mystere]
+          .map(() => "<span></span>").join("")}</span>
+          <span class="mm-compte">${trouves.size} mot${trouves.size > 1 ? "s" : ""} sur ${total}</span>`;
+      } else {
+        elMystere.innerHTML = `<p class="mm-consigne">${fini ? "Bravo ! Voici le mot mystérieux :"
+          : "Tous les mots sont trouvés ! Faites glisser les lettres restantes dans les cases pour former le mot mystérieux."}</p>
+          <span class="mm-lettres mm-cible">${cases}</span>`;
       }
-      elMystere.innerHTML = `<span class="mm-mystere-titre">Mot mystérieux</span><span class="mm-lettres">${[...g.mystere]
-        .map((ch) => `<span>${fini ? ch : ""}</span>`).join("")}</span>
-        <span class="mm-compte">${trouves.size} mot${trouves.size > 1 ? "s" : ""} sur ${total}</span>`;
     }
 
     // ---------- Taille ----------
@@ -137,6 +179,9 @@
       const r = elZone.getBoundingClientRect();
       const s = Math.max(16, Math.floor(Math.min(64, (r.width - 12) / C, (r.height - 12) / R)));
       elMM.style.setProperty("--mm", s + "px");
+      // Cases du mot mystérieux : aussi grandes que possible sur une ligne.
+      const n = g.mystere.length;
+      elMM.style.setProperty("--bx", Math.max(26, Math.min(58, Math.floor((elMM.clientWidth - 24) / n) - 5)) + "px");
     }
 
     // ---------- Sélection : glisser du premier au dernier mot, ou toucher les deux bouts ----------
@@ -195,11 +240,96 @@
       dessiner();
       const li = elMot.get(i);
       if (li) { li.classList.add("vient"); li.scrollIntoView({ block: "nearest" }); setTimeout(() => li.classList.remove("vient"), 900); }
-      if (trouves.size === g.placements.length) victoire();
+      if (tousTrouves()) {
+        setTimeout(() => UI.modal({
+          titre: "Tous les mots sont trouvés !",
+          html: "<p>Il reste à former le <b>mot mystérieux</b> : les lettres restantes sont en jaune dans la grille.</p><p>Faites-les glisser une à une dans les cases du mot, sous la grille. Vous pouvez aussi toucher une lettre, puis une case.</p>",
+          boutons: [{ label: "C'est parti", classe: "btn-principal" }],
+        }), 500);
+      }
+    }
+
+    // ---------- Seconde phase : former le mot mystérieux avec les lettres restantes ----------
+    let choisie = null; // case de la grille choisie au toucher
+    let tire = null;    // { de: { k } ou { b }, id, x0, y0, el }
+
+    function deposer(de, b) {
+      if (de.b !== undefined) { const k = place[de.b]; place[de.b] = place[b]; place[b] = k; }
+      else {
+        const avant = place.indexOf(de.k);
+        if (avant >= 0) place[avant] = null;
+        place[b] = de.k;
+      }
+      choisie = null;
+      sauver();
+      dessiner();
+      controlerMot();
+    }
+    function retirer(b) { place[b] = null; sauver(); dessiner(); }
+
+    function controlerMot() {
+      if (place.some((k) => k === null)) return;
+      if (resolu()) { sauver(); dessiner(); victoire(); return; }
+      const cible = elMystere.querySelector(".mm-cible");
+      if (cible) { cible.classList.add("faux"); setTimeout(() => cible.classList.remove("faux"), 700); }
+      UI.toast("Ce n'est pas encore le bon mot : déplacez les lettres.");
+    }
+
+    function debutTirer(e, de) {
+      if (resolu()) return;
+      e.preventDefault();
+      tire = { de, id: e.pointerId, x0: e.clientX, y0: e.clientY, el: null };
+    }
+    function bougerTirer(e) {
+      if (!tire || e.pointerId !== tire.id) return;
+      if (!tire.el) {
+        if (Math.hypot(e.clientX - tire.x0, e.clientY - tire.y0) < 8) return;
+        tire.el = document.createElement("div");
+        tire.el.className = "mm-volante";
+        tire.el.textContent = lettreDe(tire.de.k !== undefined ? tire.de.k : place[tire.de.b]);
+        document.body.appendChild(tire.el);
+        choisie = null;
+        dessiner();
+      }
+      tire.el.style.left = e.clientX + "px";
+      tire.el.style.top = e.clientY + "px";
+    }
+    function finTirer(e) {
+      if (!tire || e.pointerId !== tire.id) return;
+      const t = tire;
+      tire = null;
+      if (t.el) {
+        t.el.remove();
+        const sous = document.elementFromPoint(e.clientX, e.clientY);
+        const boite = sous && sous.closest(".mm-boite");
+        if (boite && elMystere.contains(boite)) deposer(t.de, +boite.dataset.b);
+        else if (t.de.b !== undefined) retirer(t.de.b); // lettre sortie du mot : elle revient
+        return;
+      }
+      // Toucher simple : une lettre de la grille, puis une case du mot.
+      if (t.de.k !== undefined) { choisie = choisie === t.de.k ? null : t.de.k; dessiner(); return; }
+      if (choisie !== null) deposer({ k: choisie }, t.de.b);
+      else if (place[t.de.b] !== null) retirer(t.de.b);
     }
 
     elPlateau.addEventListener("pointerdown", (e) => {
-      if (geste || elMM.classList.contains("termine")) return;
+      if (!tousTrouves()) return;
+      const [x, y] = caseSous(e);
+      const k = y * C + x;
+      if (reste.includes(k) && !place.includes(k)) debutTirer(e, { k });
+    });
+    elMystere.addEventListener("pointerdown", (e) => {
+      const boite = e.target.closest(".mm-boite");
+      if (!boite || !tousTrouves()) return;
+      const b = +boite.dataset.b;
+      if (place[b] !== null || choisie !== null) debutTirer(e, { b });
+    });
+    document.addEventListener("pointermove", bougerTirer);
+    document.addEventListener("pointerup", finTirer);
+    document.addEventListener("pointercancel", finTirer);
+
+    elPlateau.addEventListener("pointerdown", (e) => {
+      if (geste || tousTrouves()) return;
       e.preventDefault();
       const [x, y] = caseSous(e);
       geste = { x0: x, y0: y, x1: x, y1: y, id: e.pointerId, bouge: false };
@@ -236,6 +366,7 @@
     // ---------- Aide : montre un mot pendant quelques secondes ----------
     let minuteurAide = null;
     function aide() {
+      if (tousTrouves()) { aideMystere(); return; }
       const libres = ordre.filter((i) => !trouves.has(i));
       if (!libres.length) return;
       const i = libres[Math.floor(Math.random() * libres.length)];
@@ -252,11 +383,26 @@
       }, 3000);
     }
 
+    // Aide de la seconde phase : place une bonne lettre dans la première case fausse ou vide.
+    function aideMystere() {
+      if (resolu()) return;
+      const b = [...g.mystere].findIndex((ch, i) => place[i] === null || lettreDe(place[i]) !== ch);
+      const voulue = g.mystere[b];
+      // Une case de la grille avec cette lettre : libre, sinon mal placée ailleurs.
+      let k = reste.find((x) => lettreDe(x) === voulue && !place.includes(x));
+      if (k === undefined) k = reste.find((x) => { const i = place.indexOf(x); return lettreDe(x) === voulue && i >= 0 && g.mystere[i] !== voulue; });
+      if (k === undefined) return;
+      const i = place.indexOf(k);
+      if (i >= 0) deposer({ b: i }, b); else deposer({ k }, b);
+      const boite = elMystere.querySelector(`[data-b="${b}"]`);
+      if (boite) { boite.classList.add("aidee"); setTimeout(() => boite.classList.remove("aidee"), 1200); }
+    }
+
     function victoire() {
       setTimeout(() => {
         UI.modal({
           titre: "Bravo ! Grille terminée",
-          html: `<p>Tous les mots sont trouvés.</p><p>Le mot mystérieux est :</p><p class="mm-reponse">${UI.echap(g.mystere)}</p>`,
+          html: `<p>Vous avez trouvé le mot mystérieux :</p><p class="mm-reponse">${UI.echap(g.mystere)}</p>`,
           boutons: [
             { label: "Retour aux grilles", classe: "btn-principal", action: () => { location.hash = base; } },
             { label: "Rester sur la grille" },
@@ -274,7 +420,14 @@
     dimensionner();
     const ro = new ResizeObserver(() => dimensionner());
     ro.observe(elZone);
-    return () => { ro.disconnect(); clearTimeout(minuteurAide); };
+    return () => {
+      ro.disconnect();
+      clearTimeout(minuteurAide);
+      document.removeEventListener("pointermove", bougerTirer);
+      document.removeEventListener("pointerup", finTirer);
+      document.removeEventListener("pointercancel", finTirer);
+      if (tire && tire.el) tire.el.remove();
+    };
   }
 
   window.MotMysterieux = { valider, progression, reinitialiser, ouvrir };
