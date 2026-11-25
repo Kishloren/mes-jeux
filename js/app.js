@@ -2,7 +2,7 @@
 (function () {
   "use strict";
 
-  const VERSION_APP = "29"; // à incrémenter avec VERSION dans sw.js
+  const VERSION_APP = "30"; // à incrémenter avec VERSION dans sw.js
 
   const Store = {
     get(cle, defaut) {
@@ -63,7 +63,19 @@
     return String(s).replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
   }
 
-  window.UI = { Store, toast, modal, echap };
+  // Paramètres de l'appli. parametres() les lit ; parametres({ cle: valeur }) les modifie.
+  const DEFAUTS = { clavier: "azerty", mmAffichage: "couleur" };
+  function parametres(modif) {
+    const p = Object.assign({}, DEFAUTS, Store.get("parametres", {}));
+    if (modif) { Object.assign(p, modif); Store.set("parametres", p); }
+    return p;
+  }
+  // Rangées du clavier des jeux (la troisième reçoit aussi les touches ◀ ▶ ⌫).
+  const clavier = () => (parametres().clavier === "alpha"
+    ? ["ABCDEFGHIJ", "KLMNOPQRST", "UVWXYZ"]
+    : ["AZERTYUIOP", "QSDFGHJKLM", "WXCVBN"]);
+
+  window.UI = { Store, toast, modal, echap, parametres, clavier };
 
   // ---------- Écrans ----------
   const app = document.getElementById("app");
@@ -79,51 +91,86 @@
   // Toutes les grilles : celles livrées avec l'appli puis celles de la Bibliothèque.
   const photos = () => window.Bibliotheque.photos;
 
+  // Portail : une petite tuile par jeu, dans la charte graphique de ses couvertures.
   function ecranPortail() {
     vider();
     document.title = "Mes jeux";
     const p = photos()[0];
-    const icPuzzle = p
-      ? [0, 1, 2, 3].map((i) => `<span style="background-image:url('${p.mini}');background-position:${-(i % 2) * 58}px ${-Math.floor(i / 2) * 58 - 29}px"></span>`).join("")
-      : "<span></span><span></span><span></span><span></span>";
+    const carre = (n, plein) => Array.from({ length: n }, (_, i) => `<i${plein(i) ? ' class="plein"' : ""}></i>`).join("");
+    const mosaique = p
+      ? Array.from({ length: 12 }, (_, i) => `<i style="background-image:url('${p.mini}');background-position:${(i % 4) * 33.3}% ${Math.floor(i / 4) * 50}%"></i>`).join("")
+      : Array.from({ length: 12 }, () => "<i></i>").join("");
     app.innerHTML = `
       <div class="page">
         <header class="entete-portail">
+          <a class="btn-reglages" href="#/parametres" aria-label="Paramètres">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M19.4 13a7.5 7.5 0 0 0 0-2l2.1-1.6-2-3.5-2.5 1a7.6 7.6 0 0 0-1.7-1L15 3.3h-4l-.4 2.6a7.6 7.6 0 0 0-1.7 1l-2.5-1-2 3.5L6.6 11a7.5 7.5 0 0 0 0 2l-2.1 1.6 2 3.5 2.5-1a7.6 7.6 0 0 0 1.7 1l.4 2.6h4l.4-2.6a7.6 7.6 0 0 0 1.7-1l2.5 1 2-3.5zM13 15.5A3.5 3.5 0 1 1 13 8.5a3.5 3.5 0 0 1 0 7z" transform="translate(-1 0)"/></svg>
+          </a>
           <h1>Mes jeux</h1>
           <p>Choisissez une activité</p>
         </header>
         <div class="tuiles">
-          <a class="tuile" href="#/chasse-croise">
-            <span class="tuile-icone" aria-hidden="true">
-              <span>C</span><span>H</span><span>A</span><span>S</span>
-            </span>
-            <span class="tuile-nom">Chassé-croisé</span>
+          <a class="tuile t-carnet" href="#/chasse-croise">
+            <span class="t-carte"><span class="t-nom">Chassé-<br>croisé</span><span class="t-cc">${carre(5, () => true)}</span></span>
           </a>
-          <a class="tuile" href="#/mots-codes">
-            <span class="tuile-icone tuile-mc" aria-hidden="true">
-              <span><small>7</small>M</span><span><small>3</small>O</span><span><small>12</small>T</span><span><small>9</small>S</span>
-            </span>
-            <span class="tuile-nom">Mots codés</span>
+          <a class="tuile t-carnet" href="#/mots-codes">
+            <span class="t-carte"><span class="t-nom t-serif">Mots<br>codés</span><span class="t-grille">${carre(16, (i) => i % 5 === 0)}</span></span>
           </a>
-          <a class="tuile" href="#/mot-mysterieux">
-            <span class="tuile-icone tuile-mm" aria-hidden="true">
-              <span>M</span><span>O</span><span>T</span><span>S</span>
-            </span>
-            <span class="tuile-nom">Mot mystérieux</span>
+          <a class="tuile t-carnet" href="#/mot-mysterieux">
+            <span class="t-carte"><span class="t-nom t-serif">Mot<br>mystérieux</span><span class="t-mm">${[..."MOTSLIRE"].map((l) => `<i>${l}</i>`).join("")}<b></b></span></span>
           </a>
-          <a class="tuile" href="#/alphamot">
-            <span class="tuile-icone tuile-am" aria-hidden="true">
-              <span><small>AEIST</small></span><span>A</span><span>T</span><span>S</span>
-            </span>
-            <span class="tuile-nom">Alphamot</span>
+          <a class="tuile t-alpha" href="#/alphamot">
+            <span class="t-pastille">Alphamot</span>
+            <span class="t-am"><i class="d">AEIST<br>T ↴</i><i>A</i><i>T</i><i>T</i><i>I</i><i class="d">**→</i><i>S</i></span>
           </a>
-          <a class="tuile" href="#/puzzle">
-            <span class="tuile-icone ${p ? "tuile-puzzle" : ""}" aria-hidden="true">${icPuzzle}</span>
-            <span class="tuile-nom">Puzzle</span>
+          <a class="tuile t-puzzle" href="#/puzzle">
+            <span class="t-bandeau">Puzzle</span>
+            <span class="t-mosaique">${mosaique}</span>
           </a>
         </div>
         <p class="version">version ${VERSION_APP}</p>
       </div>`;
+  }
+
+  // ---------- Paramètres ----------
+  function ecranParametres() {
+    vider();
+    document.title = "Paramètres";
+    const P = UI.parametres();
+    const choix = (cle, options) => `<div class="choix" role="radiogroup">${options.map(([v, titre, apercu]) => `
+          <button class="choix-opt${P[cle] === v ? " actif" : ""}" role="radio" aria-checked="${P[cle] === v}" data-cle="${cle}" data-v="${v}">
+            <span class="choix-titre">${titre}</span>${apercu}
+          </button>`).join("")}</div>`;
+    const touches = (t) => `<span class="apercu-clavier">${[...t].map((l) => `<i>${l}</i>`).join("")}…</span>`;
+    const mot = (classe) => `<span class="apercu-mm ${classe}"><span>P</span><span>A</span><span>N</span><span>I</span><span>E</span><span>R</span></span>`;
+    app.innerHTML = `
+      <div class="page">
+        <header class="barre">
+          <a class="btn btn-retour" href="#/">← Accueil</a>
+          <h1>Paramètres</h1>
+        </header>
+        <div class="reglages">
+          <section>
+            <h2>Clavier des jeux</h2>
+            <p>Pour le chassé-croisé, les mots codés et l'alphamot.</p>
+            ${choix("clavier", [["azerty", "AZERTY", touches("AZERTY")], ["alpha", "Alphabétique", touches("ABCDEF")]])}
+          </section>
+          <section>
+            <h2>Mot mystérieux : mots trouvés</h2>
+            <p>Comment les mots trouvés sont marqués dans la grille.</p>
+            ${choix("mmAffichage", [["couleur", "Surlignés en couleur", mot("couleur")], ["biffage", "Barrés d'un trait", mot("biffage")]])}
+          </section>
+        </div>
+      </div>`;
+    app.querySelector(".reglages").addEventListener("click", (e) => {
+      const b = e.target.closest("[data-cle]");
+      if (!b) return;
+      UI.parametres({ [b.dataset.cle]: b.dataset.v });
+      b.parentElement.querySelectorAll(".choix-opt").forEach((o) => {
+        o.classList.toggle("actif", o === b);
+        o.setAttribute("aria-checked", o === b);
+      });
+    });
   }
 
   // ---------- Accueil d'un jeu : les packs présents sur la tablette ----------
@@ -750,6 +797,7 @@
     else if (ecran === "puzzle") ecranAccueilPZ();
     else if (ecran === "puzzle-ajouter") ecranAjoutPZ();
     else if (ecran === "ajouter-photo") ecranAjoutPhoto(a || "");
+    else if (ecran === "parametres") ecranParametres();
     else ecranPortail();
     window.scrollTo(0, 0);
   }

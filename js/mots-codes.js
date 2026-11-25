@@ -3,7 +3,6 @@
 (function () {
   "use strict";
 
-  const CLAVIER = ["AZERTYUIOP", "QSDFGHJKLM", "WXCVBN"];
   const cle = (g) => "mc-" + g.id;
 
   // Contrôles d'une grille (format interne) ; renvoie la liste des erreurs.
@@ -128,7 +127,7 @@
 
     // Clavier
     const touches = {};
-    CLAVIER.forEach((rangee, ri) => {
+    UI.clavier().forEach((rangee, ri) => {
       const r = document.createElement("div");
       r.className = "rangee";
       for (const k of rangee) {

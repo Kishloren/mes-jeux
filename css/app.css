@@ -65,25 +65,6 @@ button { font: inherit; color: inherit; }
 .entete-portail { text-align: center; padding: 40px 16px 8px; }
 .entete-portail h1 { font-size: 44px; margin: 0; color: var(--bleu-fonce); }
 .entete-portail p { font-size: 24px; color: var(--gris); margin: 8px 0 0; }
-.tuiles {
-  display: flex; flex-wrap: wrap; justify-content: center; gap: 28px;
-  padding: 32px 16px;
-}
-.tuile {
-  width: 260px; height: 260px;
-  display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 22px;
-  background: #fff; border: 3px solid var(--bleu); border-radius: 24px;
-  box-shadow: 0 6px 18px rgba(31, 95, 168, 0.18);
-}
-.tuile:active { transform: scale(0.97); background: var(--bleu-clair); }
-.tuile-icone { display: grid; grid-template-columns: repeat(2, 56px); gap: 4px; }
-.tuile-icone span {
-  height: 56px; display: flex; align-items: center; justify-content: center;
-  border: 2px solid var(--noir); background: #fff;
-  font-size: 30px; font-weight: 700;
-}
-.tuile-icone span:nth-child(2), .tuile-icone span:nth-child(3) { background: var(--bleu-clair); }
-.tuile-nom { font-size: 28px; font-weight: 700; color: var(--bleu-fonce); }
 
 .version { text-align: center; color: var(--gris); font-size: 15px; margin: 24px 0; }
 .cartes {
@@ -263,8 +244,6 @@ button { font: inherit; color: inherit; }
 }
 
 /* ---------- Puzzle ---------- */
-.tuile-puzzle { gap: 3px; }
-.tuile-puzzle span { background-size: 114px 171px; border-color: #fff; }
 
 .pz-consigne { text-align: center; font-size: 22px; color: var(--gris); margin: 16px 0 0; }
 .pz-cartes {
@@ -337,12 +316,6 @@ button { font: inherit; color: inherit; }
 .btn-discret { border-color: #c5ceda; color: var(--gris); }
 
 /* ---------- Bibliothèque ---------- */
-.tuile-livres { display: flex; align-items: flex-end; gap: 6px; height: 116px; }
-.tuile-livres span { width: 26px; border: 2px solid var(--noir); border-radius: 4px 4px 2px 2px; background: var(--bleu); }
-.tuile-livres span:nth-child(1) { height: 100px; }
-.tuile-livres span:nth-child(2) { height: 112px; background: #fff; }
-.tuile-livres span:nth-child(3) { height: 92px; background: var(--bleu-clair); }
-.tuile-livres span:nth-child(4) { height: 104px; transform: rotate(10deg); transform-origin: bottom left; background: var(--revele); }
 
 .section-titre { font-size: 24px; color: var(--bleu-fonce); margin: 24px 16px 0; max-width: 1100px; }
 .section-titre + .cartes { padding-top: 12px; }
@@ -372,8 +345,6 @@ button { font: inherit; color: inherit; }
 .pz-credit { color: #dfe6ee; font-size: 16px; margin: 0; text-align: center; padding: 0 16px; }
 
 /* ---------- Mots codés ---------- */
-.tuile-mc span { position: relative; }
-.tuile-mc small { position: absolute; top: 1px; left: 3px; font-size: 12px; font-weight: 400; color: var(--gris); }
 .mc { height: 100%; height: 100dvh; display: flex; flex-direction: column; overflow: hidden; --mc: 40px; }
 .mc-zone { flex: 1; min-height: 0; display: flex; align-items: center; justify-content: center; padding: 6px; }
 .mc-grille { display: grid; border: 2px solid var(--noir); background: var(--noir); gap: 1px; }
@@ -556,12 +527,8 @@ button { font: inherit; color: inherit; }
 .mm-mots li.aide { background: var(--bleu-clair); }
 .mm.termine .mm-grille { border-color: var(--revele); }
 .mm-reponse { font-size: 32px; font-weight: 800; letter-spacing: 0.08em; color: #c92a2a; text-align: center; }
-.tuile-mm span { border-radius: 50%; }
-.tuile-mm span:nth-child(1), .tuile-mm span:nth-child(4) { background: #ffd43b; }
 
 /* ---------- Alphamot ---------- */
-.tuile-am span:first-child small { font-size: 11px; font-weight: 700; letter-spacing: -0.02em; }
-.tuile-am span:first-child { background: #f0c9a0 !important; }
 .am { height: 100%; height: 100dvh; display: flex; flex-direction: column; overflow: hidden; --am: 40px; }
 .am .barre { padding: 4px 10px; gap: 8px; }
 .am-zone { flex: 1; min-height: 0; display: flex; align-items: center; justify-content: center; padding: 4px; }
@@ -600,3 +567,83 @@ button { font: inherit; color: inherit; }
 .am-def-n { font-size: 16px; color: var(--gris); }
 .am.termine .am-grille { border-color: var(--revele); }
 .am-txt { display: block; text-align: center; line-height: 1.02; }
+
+/* ---------- Portail : tuiles des jeux, dans la charte de leurs couvertures ---------- */
+@font-face { font-family: "DejaVu Serif Couverture"; src: url(../fonts/DejaVuSerif-Bold-latin.woff2) format("woff2"); font-weight: bold; }
+.entete-portail { position: relative; }
+.btn-reglages {
+  position: absolute; top: 12px; right: 16px; width: 60px; height: 60px; border-radius: 50%;
+  display: flex; align-items: center; justify-content: center; background: #fff;
+  border: 2px solid var(--bleu); box-shadow: 0 3px 8px rgba(31, 95, 168, 0.2);
+}
+.btn-reglages svg { width: 34px; height: 34px; fill: var(--bleu-fonce); fill-rule: evenodd; }
+.btn-reglages:active { background: var(--bleu-clair); }
+.tuiles {
+  display: grid; grid-template-columns: repeat(auto-fill, 168px); justify-content: center; gap: 20px;
+  padding: 28px 16px;
+}
+.tuile {
+  position: relative; display: flex; flex-direction: column; aspect-ratio: 3 / 4; overflow: hidden;
+  border-radius: 16px; box-shadow: 0 6px 16px rgba(20, 40, 70, 0.25); text-decoration: none;
+}
+.tuile:active { transform: scale(0.96); }
+/* Carnets (chassé-croisé, mots codés, mot mystérieux) : carte crème sur bleu nuit */
+.t-carnet { background: #1b324b; padding: 10px; }
+.t-carte {
+  flex: 1; border-radius: 10px; background: #f5ead8;
+  display: flex; flex-direction: column; align-items: center; justify-content: space-evenly; padding: 8px 6px;
+}
+.t-nom { font: bold 19px/1.1 system-ui, sans-serif; color: #1b324b; text-align: center; text-transform: uppercase; letter-spacing: 0.02em; }
+.t-serif { font-family: "DejaVu Serif Couverture", "DejaVu Serif", Georgia, serif; font-size: 18px; }
+.t-cc { display: flex; gap: 5px; }
+.t-cc i { width: 18px; height: 18px; border-radius: 3px; background: #c8843f; }
+.t-grille { display: grid; grid-template-columns: repeat(4, 17px); gap: 3px; }
+.t-grille i { height: 17px; border-radius: 3px; background: #fffdf8; border: 1.5px solid #c8843f; box-sizing: border-box; }
+.t-grille i.plein { background: #1b324b; border-color: #1b324b; }
+.t-mm { position: relative; display: grid; grid-template-columns: repeat(4, 20px); gap: 2px; }
+.t-mm i { font: bold 17px/20px "DejaVu Serif Couverture", Georgia, serif; font-style: normal; color: #1b324b; text-align: center; }
+.t-mm b { position: absolute; left: -2px; right: -2px; top: 1px; height: 18px; border-radius: 9px; background: rgba(200, 132, 63, 0.5); }
+/* Alphamot : rose magazine, pastille blanche, grille fléchée */
+.t-alpha { background: linear-gradient(160deg, #ff5fa2, #e8287a); align-items: center; justify-content: space-evenly; padding: 10px; }
+.t-pastille { background: #fff; color: #7a1340; border-radius: 999px; padding: 4px 16px; font: 800 19px system-ui, sans-serif; box-shadow: 0 2px 4px rgba(0,0,0,.15); }
+.t-am {
+  display: grid; grid-template-columns: repeat(3, 34px); gap: 2px; padding: 5px; background: #fff;
+  border-radius: 8px; transform: rotate(-4deg); box-shadow: 0 3px 8px rgba(0,0,0,.2);
+}
+.t-am i { height: 34px; display: flex; align-items: center; justify-content: center; font: 800 18px system-ui, sans-serif; font-style: normal; color: #7a1340; background: #fff; border: 1px solid #f3c6da; }
+.t-am i.d { background: #fde0ec; font-size: 8px; line-height: 1.1; text-align: center; }
+/* Puzzle : bandeau sombre, filet orange, mosaïque */
+.t-puzzle { background: #18232b; }
+.t-bandeau {
+  flex: none; height: 26%; display: flex; align-items: center; justify-content: center;
+  border-bottom: 3px solid #d18745; font: bold 24px "DejaVu Serif Couverture", Georgia, serif; color: #f6efe2;
+}
+.t-mosaique { flex: 1; display: grid; grid-template-columns: repeat(4, 1fr); grid-template-rows: repeat(3, 1fr); gap: 3px; padding: 4px; }
+.t-mosaique i { background: #2d3d49; background-size: 400% 300%; }
+.t-mosaique i:nth-child(3n+1) { background-color: #3b4f5c; }
+
+/* ---------- Paramètres ---------- */
+.reglages { max-width: 760px; margin: 0 auto; padding: 16px; display: flex; flex-direction: column; gap: 20px; }
+.reglages section { background: #fff; border-radius: 16px; padding: 18px; box-shadow: 0 3px 10px rgba(31, 95, 168, 0.12); }
+.reglages h2 { margin: 0 0 4px; font-size: 24px; color: var(--bleu-fonce); }
+.reglages p { margin: 0 0 14px; font-size: 18px; color: var(--gris); }
+.choix { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+.choix-opt {
+  display: flex; flex-direction: column; align-items: center; gap: 10px; padding: 14px 10px;
+  border: 3px solid #c5ceda; border-radius: 14px; background: #f7f9fc; cursor: pointer; font: inherit;
+}
+.choix-opt.actif { border-color: var(--bleu); background: var(--bleu-clair); box-shadow: inset 0 0 0 1px var(--bleu); }
+.choix-titre { font-size: 20px; font-weight: 700; color: var(--bleu-fonce); }
+.choix-opt.actif .choix-titre::before { content: "✓ "; }
+.apercu-clavier { display: flex; gap: 3px; align-items: center; color: var(--gris); font-weight: 700; }
+.apercu-clavier i { font-style: normal; width: 26px; height: 30px; display: flex; align-items: center; justify-content: center; background: #fff; border-radius: 5px; box-shadow: 0 2px 0 #9aa5b1; color: var(--encre); font-size: 16px; }
+.apercu-mm { position: relative; display: flex; }
+.apercu-mm span { width: 26px; height: 30px; display: flex; align-items: center; justify-content: center; font-size: 20px; font-weight: 700; color: var(--encre); }
+.apercu-mm.couleur::after { content: ""; position: absolute; left: 2px; right: 2px; top: 3px; bottom: 3px; border-radius: 12px; background: #8ce99a; mix-blend-mode: multiply; opacity: 0.7; }
+.apercu-mm.biffage::after { content: ""; position: absolute; left: 6px; right: 6px; top: 50%; height: 3px; margin-top: -1px; border-radius: 2px; background: #1d2733; }
+
+/* ---------- Mot mystérieux : affichage par biffage ---------- */
+.mm.biffage .mm-traits { mix-blend-mode: normal; }
+.mm.biffage .mm-trouve { stroke: #1d2733 !important; stroke-width: 0.12; opacity: 0.85; }
+.mm.biffage .mm-mots li.trouve { background: none; color: #8a94a3; }
+.mm.biffage .mm-mots li.vient { outline-color: #1d2733; }

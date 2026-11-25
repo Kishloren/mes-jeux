@@ -73,6 +73,8 @@
         <ul class="mm-mots"></ul>
       </div>`;
     const elMM = racine.querySelector(".mm");
+    // Mots trouvés surlignés en couleur, ou barrés d'un trait (paramètre de l'appli).
+    elMM.classList.toggle("biffage", UI.parametres().mmAffichage === "biffage");
     const elZone = racine.querySelector(".mm-zone");
     const elPlateau = racine.querySelector(".mm-plateau");
     const elGrille = racine.querySelector(".mm-grille");

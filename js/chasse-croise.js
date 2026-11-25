@@ -97,7 +97,6 @@
     return lignes;
   }
 
-  const CLAVIER = ["AZERTYUIOP", "QSDFGHJKLM", "WXCVBN"];
 
   // base : adresse de la liste des grilles (le carnet).
   function ouvrir(racine, g, base = "#/chasse-croise") {
@@ -206,7 +205,7 @@
     mots.forEach((m) => m.forEach((c) => { jointDePos[c.pos] = c.joint; }));
 
     // Clavier
-    CLAVIER.forEach((rangee, ri) => {
+    UI.clavier().forEach((rangee, ri) => {
       const r = document.createElement("div");
       r.className = "rangee";
       for (const k of rangee) {

@@ -5,7 +5,6 @@
 (function () {
   "use strict";
 
-  const CLAVIER = ["AZERTYUIOP", "QSDFGHJKLM", "WXCVBN"];
   // Départ et sens de lecture de chaque flèche, depuis la case définition.
   const FLECHES = {
     droite: { ox: 1, oy: 0, dx: 1, dy: 0 },
@@ -132,7 +131,7 @@
     });
 
     // ---------- Clavier ----------
-    CLAVIER.forEach((rangee, ri) => {
+    UI.clavier().forEach((rangee, ri) => {
       const r = document.createElement("div");
       r.className = "rangee";
       r.innerHTML = [...rangee].map((k) => `<button class="touche" data-k="${k}">${k}</button>`).join("")
