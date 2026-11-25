@@ -5,6 +5,12 @@
 
   const BASE = "https://www.stansgames.fr/jeux-tablette/api";
   const URL_INDEX = BASE + "/v1/bibliotheque";
+  // Version de la lecture des contenus par l'appli, par type : quand elle augmente, les
+  // éléments installés avant doivent être retéléchargés (bouton « Mettre à jour »).
+  // Mots codés 2 : lettres isolées révélées au lieu d'écarter la grille.
+  const LECTURE = { "mots-codes": 2 };
+  const aRelire = (inst) => (inst.lecture || 1) < (LECTURE[inst.type] || 1);
+
   // Formats de manifeste acceptés pour chaque type.
   const TYPES = {
     images: ["mes-jeux-pack-images"],
@@ -177,8 +183,18 @@
     const ordre = [...presentes].sort((a, b) => (numero[a] || 99) - (numero[b] || 99));
     const codes = {};
     ordre.forEach((ch, i) => { codes[ch] = i + 1; });
-    const devoiles = [...new Set((g.lettres_donnees || []).map((x) => x.lettre).filter((ch) => presentes.has(ch)))];
-    return { id: g.id, nom: g.titre, niveau: g.niveau, lignes, codes, devoiles };
+    const devoiles = new Set((g.lettres_donnees || []).map((x) => x.lettre).filter((ch) => presentes.has(ch)));
+    // Une lettre présente une seule fois, hors d'un croisement, n'aurait qu'un mot pour être
+    // devinée : on la donne d'office (règle 7 de la spécification).
+    const blanc = (l, c) => l >= 0 && l < lignes.length && c >= 0 && c < lignes[l].length && lignes[l][c] !== "#";
+    const pos = {};
+    lignes.forEach((ligne, l) => [...ligne].forEach((ch, c) => { if (ch !== "#") (pos[ch] = pos[ch] || []).push([l, c]); }));
+    Object.entries(pos).forEach(([ch, p]) => {
+      if (p.length !== 1) return;
+      const [l, c] = p[0];
+      if (!((blanc(l, c - 1) || blanc(l, c + 1)) && (blanc(l - 1, c) || blanc(l + 1, c)))) devoiles.add(ch);
+    });
+    return { id: g.id, nom: g.titre, niveau: g.niveau, lignes, codes, devoiles: [...devoiles] };
   }
 
   // Installe (ou met à jour) un élément de l'index. `progres(fait, total)`.
@@ -255,6 +271,7 @@
     const enr = {
       id: el.id, type: el.type, version: el.version, titre: el.titre,
       description: el.description || "", contenu: nouveaux.map((x) => x.id),
+      lecture: LECTURE[el.type] || 1,
     };
     enr.couverture = couvertureRecue && couvertureRecue.type.startsWith("image/") ? couvertureRecue : null;
     sEl.put(enr);
@@ -392,7 +409,7 @@
   }
 
   window.Bibliotheque = {
-    charger, lireIndex, installer, supprimer, ajouterPhoto, retirerPhoto, archiver, varianteVoulue,
+    charger, lireIndex, installer, supprimer, aRelire, ajouterPhoto, retirerPhoto, archiver, varianteVoulue,
     get elements() { return etat.elements; },
     get photos() { return etat.photos; },
     get packs() { return etat.packs; },

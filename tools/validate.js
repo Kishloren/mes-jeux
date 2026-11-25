@@ -1,16 +1,18 @@
-// Vérifie la cohérence des grilles : node tools/validate.js
+// Vérifie la cohérence d'un carnet de chassé-croisé (format mes-jeux-carnet-cc de l'API) :
+// node tools/validate.js <carnet.json>
 const fs = require("fs");
-const path = require("path");
-const vm = require("vm");
 
-const ctx = { window: {} };
-vm.runInNewContext(fs.readFileSync(path.join(__dirname, "../js/data-chasse-croise.js"), "utf8"), ctx);
+const carnet = JSON.parse(fs.readFileSync(process.argv[2] || "docs/exemples/carnet-exemple.json", "utf8"));
+const grilles = carnet.grilles.map((g) => ({
+  id: g.id, citation: g.citation, acrostiche: g.acrostiche,
+  defs: g.definitions.map((d) => [d.lettre, d.intitule, d.reponse, d.cases]),
+}));
 
 const norm = (s) => s.normalize("NFD").replace(/[̀-ͯ]/g, "").toUpperCase()
   .replace(/Œ/g, "OE").replace(/Æ/g, "AE");
 
 let ok = true;
-for (const g of ctx.window.CC_GRILLES) {
+for (const g of grilles) {
   const letters = [...norm(g.citation)].filter((c) => /[A-Z]/.test(c));
   const N = letters.length;
   const seen = new Map();

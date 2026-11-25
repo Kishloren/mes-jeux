@@ -2,7 +2,7 @@
 (function () {
   "use strict";
 
-  const VERSION_APP = "25"; // à incrémenter avec VERSION dans sw.js
+  const VERSION_APP = "26"; // à incrémenter avec VERSION dans sw.js
 
   const Store = {
     get(cle, defaut) {
@@ -140,12 +140,10 @@
   }
 
   // ---------- Jeux de grilles : chassé-croisé, mots codés ----------
-  const INTEGRES = "grilles-offertes";
   const JEUX = {
     "chasse-croise": {
       nom: "Chassé-croisé",
       motif: "cc",
-      integrees: () => window.CC_GRILLES,
       module: () => window.ChasseCroise,
       fini: (g) => window.ChasseCroise.progression(g).fini,
       carte(g, href) {
@@ -167,7 +165,6 @@
     "mots-codes": {
       nom: "Mots codés",
       motif: "mc",
-      integrees: () => window.MC_GRILLES,
       module: () => window.MotsCodes,
       fini: (g) => window.MotsCodes.progression(g).fini,
       carte(g, href) {
@@ -186,14 +183,12 @@
   };
   const lienJeu = (type, ...ids) => "#/" + [type, ...ids.map(encodeURIComponent)].join("/");
 
-  // Packs d'un jeu : les grilles livrées avec l'appli, puis les carnets téléchargés.
+  // Packs d'un jeu : les carnets téléchargés (l'appli n'embarque plus de grilles).
   function packsJeu(type) {
-    const integ = JEUX[type].integrees();
-    return (integ.length ? [{ id: INTEGRES, titre: "Grilles offertes", integre: true, grilles: integ, couverture: null }] : [])
-      .concat(window.Bibliotheque.packs.filter((pk) => pk.type === type && !pk.archive && pk.grilles.length));
+    return window.Bibliotheque.packs.filter((pk) => pk.type === type && !pk.archive && pk.grilles.length);
   }
 
-  // Couvertures fabriquées par l'appli (grilles intégrées, carnet sans couverture).
+  // Couvertures fabriquées par l'appli (carnet téléchargé sans couverture).
   const couvFabriquees = new Map();
   function completerCouvertures(type, liste) {
     liste.filter((pk) => !pk.couverture).forEach((pk) => {
@@ -240,7 +235,7 @@
     document.title = pk.titre;
     const cartes = pk.grilles.map((g) => {
       const c = J.carte(g, lienJeu(type, pk.id, g.id));
-      return `<div class="carte-bloc">${c.html}${c.entamee ? `<button class="btn btn-raz" data-raz="${echap(g.id)}">↺ Recommencer cette grille</button>` : ""}</div>`;
+      return `<div class="grille-bloc">${c.html}${c.entamee ? `<button class="grille-raz" data-raz="${echap(g.id)}" aria-label="Recommencer cette grille">↺</button>` : ""}</div>`;
     }).join("");
     app.innerHTML = `
       <div class="page">
@@ -248,7 +243,7 @@
           <a class="btn btn-retour" href="#/${type}">← Carnets</a>
           <h1>${echap(pk.titre)}</h1>
         </header>
-        <div class="cartes">${cartes}</div>
+        <div class="grilles-carnet">${cartes}</div>
         ${pk.integre ? "" : `<p class="pz-pied"><button class="btn btn-discret" data-retirer-pack>Retirer ce carnet de la tablette</button></p>`}
       </div>`;
     app.querySelectorAll("[data-raz]").forEach((b) => b.addEventListener("click", () => {
@@ -624,7 +619,7 @@
           ? `<button class="btn btn-principal" data-act="installer" data-id="${echap(el.id)}">Télécharger</button>`
           : `<span class="biblio-etat">Indisponible hors connexion</span>`;
       } else {
-        const maj = enLigne && !horsLigne && el.version > inst.version;
+        const maj = enLigne && !horsLigne && (el.version > inst.version || window.Bibliotheque.aRelire(inst));
         actions = (maj ? `<button class="btn btn-principal" data-act="installer" data-id="${echap(el.id)}">Mettre à jour</button>`
           : (ouvrir ? `<a class="btn btn-principal" href="${ouvrir(el)}">Ouvrir</a>` : `<span class="biblio-etat ok">✓ Sur la tablette</span>`))
           + `<button class="btn btn-discret" data-act="supprimer" data-id="${echap(el.id)}">Retirer</button>`;

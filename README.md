@@ -6,10 +6,9 @@ Cible prioritaire : les tablettes, en mode portrait.
 
 ## Contenus
 
-- Deux grilles de Chassé-croisé sont livrées avec l'appli ([js/data-chasse-croise.js](js/data-chasse-croise.js)),
-  tirées d'œuvres du domaine public. Vérification : `node tools/validate.js`.
-- Trois grilles de Mots codés originales sont livrées avec l'appli ([js/data-mots-codes.js](js/data-mots-codes.js)),
-  produites par `node tools/mots-codes-gen.js <Lexique383.tsv> 12 10 <nombre> [graine]` (dictionnaire Lexique 3, non inclus).
+- L'appli n'embarque aucune grille : tout vient des carnets téléchargés depuis le serveur.
+  `node tools/validate.js <carnet.json>` vérifie un carnet de chassé-croisé ; `node tools/mots-codes-gen.js
+  <Lexique383.tsv> 12 10 <nombre> [graine]` est un générateur de mots codés de référence (Lexique 3, non inclus).
 - Chaque jeu a une page d'accueil qui présente ses packs (carnets de grilles, packs d'images) présents
   sur la tablette ; le bouton ＋ ouvre le catalogue du serveur pour ce jeu. L'appli interroge l'API décrite
   dans [docs/specification-bibliotheque.md](docs/specification-bibliotheque.md)
