@@ -124,6 +124,9 @@
 
     elMots.innerHTML = ordre.map((i) => `<li data-i="${i}">${g.placements[i].mot}</li>`).join("");
     const elMot = new Map([...elMots.children].map((li) => [+li.dataset.i, li]));
+    // Largeur des colonnes selon le mot le plus long.
+    const plusLong = Math.max(...g.placements.map((p) => p.mot.length));
+    elMots.style.setProperty("--mmcol", `calc(${plusLong} * 0.7em + 14px)`);
 
     // ---------- Dessin ----------
     const SVG = "http://www.w3.org/2000/svg";
@@ -176,6 +179,13 @@
     // ---------- Taille ----------
     function dimensionner() {
       elMM.style.setProperty("--mm", "10px");
+      // La liste des mots est toujours entière ; sur un petit écran, son texte rapetisse un
+      // peu pour laisser à la grille des cases d'au moins 30 px.
+      for (let f = 17; f >= 13; f--) {
+        elMM.style.setProperty("--mmf", f + "px");
+        const z = elZone.getBoundingClientRect();
+        if (Math.min((z.width - 12) / C, (z.height - 12) / R) >= 30) break;
+      }
       const r = elZone.getBoundingClientRect();
       const s = Math.max(16, Math.floor(Math.min(64, (r.width - 12) / C, (r.height - 12) / R)));
       elMM.style.setProperty("--mm", s + "px");
