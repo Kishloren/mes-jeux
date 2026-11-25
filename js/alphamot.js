@@ -179,8 +179,9 @@
         s.classList.toggle("fait", plein(m));
       });
       const autre = (motsDe[sel] || {})[sens === "h" ? "v" : "h"];
+      // Les deux définitions sur une seule ligne, de hauteur fixe : rien ne bouge en dessous.
       elDef.innerHTML = i === undefined ? "" : `<div class="am-def-ligne">${libelle(i, true)}</div>`
-        + (autre !== undefined ? `<div class="am-def-ligne am-def-croise">${libelle(autre, false)}</div>` : "");
+        + `<div class="am-def-ligne am-def-croise">${autre !== undefined ? libelle(autre, false) : ""}</div>`;
     }
 
     function selectionner(k, nouveauSens) {

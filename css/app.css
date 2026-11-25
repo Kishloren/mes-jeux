@@ -588,13 +588,14 @@ button { font: inherit; color: inherit; }
 .am-indice.actif { background: var(--sel); color: #5a2d0c; }
 .am-fl { width: 0.9em; height: 0.9em; flex: none; fill: #c8843f; stroke: #c8843f; }
 .am-def {
-  flex: none; min-height: 64px; padding: 6px 12px; background: #fff; border-top: 2px solid var(--bleu-clair);
-  display: flex; flex-direction: column; justify-content: center; gap: 2px;
+  flex: none; height: 64px; padding: 0 12px; background: #fff; border-top: 2px solid var(--bleu-clair);
+  display: flex; flex-direction: row; align-items: center; gap: 16px; overflow: hidden;
 }
-.am-def-ligne { display: flex; align-items: center; gap: 10px; }
+.am-def-ligne { display: flex; align-items: center; gap: 8px; white-space: nowrap; flex: none; }
+.am-def-croise { margin-left: auto; padding-left: 14px; border-left: 2px solid var(--bleu-clair); min-width: 0; flex: 0 1 auto; overflow: hidden; }
 .am-def-fl .am-fl { width: 24px; height: 24px; }
-.am-def-texte { font-size: 30px; font-weight: 800; letter-spacing: 0.12em; color: #5a2d0c; }
-.am-def-autre { font-size: 19px; font-weight: 700; letter-spacing: 0.08em; color: var(--gris); }
+.am-def-texte { font-size: clamp(22px, 3.8vw, 30px); font-weight: 800; letter-spacing: 0.12em; color: #5a2d0c; }
+.am-def-autre { font-size: clamp(16px, 2.6vw, 20px); font-weight: 700; letter-spacing: 0.08em; color: var(--gris); }
 .am-def-croise .am-def-fl .am-fl { width: 16px; height: 16px; opacity: 0.6; }
 .am-def-n { font-size: 16px; color: var(--gris); }
 .am.termine .am-grille { border-color: var(--revele); }

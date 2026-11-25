@@ -2,7 +2,7 @@
 (function () {
   "use strict";
 
-  const VERSION_APP = "28"; // à incrémenter avec VERSION dans sw.js
+  const VERSION_APP = "29"; // à incrémenter avec VERSION dans sw.js
 
   const Store = {
     get(cle, defaut) {
