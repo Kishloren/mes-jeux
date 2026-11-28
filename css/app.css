@@ -723,3 +723,46 @@ button { font: inherit; color: inherit; }
 .mk-mot.place { color: #a3abb7; text-decoration: line-through; }
 .mk-mot.choisi { background: var(--sel); color: var(--encre); text-decoration: none; box-shadow: 0 0 0 2px #e67700; }
 .mk-mot.selectionne { background: var(--bleu-clair); }
+
+/* ---------- Sudoku ---------- */
+.t-sdk { display: grid; grid-template-columns: repeat(3, 26px); border: 2.5px solid #1b324b; background: #fffdf8; }
+.t-sdk i { height: 26px; display: flex; align-items: center; justify-content: center; border: 1px solid #c8843f; font: bold 16px "DejaVu Serif Couverture", Georgia, serif; font-style: normal; color: #1b324b; }
+.sdk-niveau { gap: 4px; }
+.sdk-etoiles { color: #e8a317; font-size: 20px; letter-spacing: 2px; }
+.sdk-etoiles span { color: #d7dee8; }
+.sdk { height: 100%; height: 100dvh; display: flex; flex-direction: column; overflow: hidden; --sdk: 60px; }
+.sdk .barre { padding: 4px 10px; gap: 8px; }
+.sdk-zone { flex: 1; min-height: 0; display: flex; align-items: center; justify-content: center; padding: 8px; }
+.sdk-grille { display: grid; grid-template-columns: repeat(9, var(--sdk)); border: 3px solid var(--noir); background: #fff; }
+.sdk-grille.prepa { opacity: 0.3; }
+.sdk-case {
+  width: var(--sdk); height: var(--sdk); box-sizing: border-box; border-right: 1px solid #b8c2cf; border-bottom: 1px solid #b8c2cf;
+  display: flex; align-items: center; justify-content: center; position: relative;
+  font-size: calc(var(--sdk) * 0.6); font-weight: 600; color: #1f5fa8; cursor: pointer; user-select: none;
+}
+.sdk-case.bd { border-right: 3px solid var(--noir); }
+.sdk-case.bb { border-bottom: 3px solid var(--noir); }
+.sdk-case.donne { color: var(--encre); font-weight: 800; }
+.sdk-case.revele { color: var(--revele); }
+.sdk-case.zone { background: #eef3fa; }
+.sdk-case.meme { background: #cfe2fb; }
+.sdk-case.sel { background: var(--sel); }
+.sdk-case.doublon { color: var(--err); }
+.sdk-case.err { background: var(--err-fond); color: var(--err); }
+.sdk.termine .sdk-grille { border-color: var(--revele); }
+.sdk-n { position: absolute; inset: 2px; display: grid; grid-template-columns: repeat(3, 1fr); }
+.sdk-n i { font-style: normal; font-size: calc(var(--sdk) * 0.24); line-height: 1; display: flex; align-items: center; justify-content: center; color: #5b6472; font-weight: 600; }
+.sdk-pave { flex: none; padding: 8px 10px 12px; background: #dfe7f1; border-top: 2px solid var(--bleu-clair); display: flex; flex-direction: column; gap: 8px; }
+.sdk-chiffres { display: grid; grid-template-columns: repeat(9, 1fr); gap: 6px; }
+.sdk-ch {
+  height: 64px; border: 0; border-radius: 12px; background: #fff; box-shadow: 0 2px 0 #9aa5b1; cursor: pointer;
+  display: flex; flex-direction: column; align-items: center; justify-content: center; line-height: 1;
+}
+.sdk-ch b { font-size: 32px; color: var(--encre); }
+.sdk-ch small { font-size: 13px; color: var(--gris); min-height: 13px; margin-top: 2px; }
+.sdk-ch:active { background: var(--sel); }
+.sdk-ch.complet { opacity: 0.35; }
+.sdk-ch.note-on { background: #cfe2fb; box-shadow: inset 0 0 0 2px var(--bleu); }
+.sdk-outils { display: flex; gap: 10px; justify-content: center; }
+.sdk-outils .btn { flex: 1; max-width: 260px; }
+.sdk-notes.actif { background: var(--bleu); color: #fff; }

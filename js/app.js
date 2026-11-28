@@ -2,7 +2,7 @@
 (function () {
   "use strict";
 
-  const VERSION_APP = "37"; // à incrémenter avec VERSION dans sw.js
+  const VERSION_APP = "38"; // à incrémenter avec VERSION dans sw.js
 
   const Store = {
     get(cle, defaut) {
@@ -134,6 +134,9 @@
             <span class="t-pastille">Alphamot</span>
             <span class="t-am"><i class="d">AEIST<br>T ↴</i><i>A</i><i>T</i><i>T</i><i>I</i><i class="d">**→</i><i>S</i></span>
           </a>
+          <a class="tuile t-carnet" href="#/sudoku">
+            <span class="t-carte"><span class="t-nom t-serif">Sudoku</span><span class="t-sdk">${"5 3 ··7·· 6··195··· 98····6·".replace(/ /g, "").slice(0, 9).split("").map((c) => `<i>${c === "·" ? "" : c}</i>`).join("")}</span></span>
+          </a>
           <a class="tuile t-puzzle" href="#/puzzle">
             <span class="t-bandeau">Puzzle</span>
             <span class="t-mosaique">${mosaique}</span>
@@ -141,6 +144,46 @@
         </div>
         <p class="version">version ${VERSION_APP}</p>
       </div>`;
+  }
+
+  // ---------- Sudoku : choix du niveau (les grilles sont fabriquées par l'appli) ----------
+  function ecranAccueilSudoku() {
+    vider();
+    document.title = "Sudoku";
+    const cartes = window.Sudoku.NIVEAUX.map((N) => {
+      const e = window.Sudoku.etat(N.n);
+      let etat, classe = "";
+      if (!e.existe) etat = "Nouvelle grille";
+      else if (e.fini) { etat = "Terminée ✓ — touchez pour une nouvelle grille"; classe = "finie"; }
+      else etat = e.remplies ? `En cours : ${Math.round((100 * e.remplies) / e.vides)} %` : "Grille prête";
+      const prog = e.existe && !e.fini ? `<span class="barre-prog"><span style="width:${(100 * e.remplies) / e.vides}%"></span></span>` : "";
+      return `<a class="carte sdk-niveau ${classe}" href="#/sudoku/${N.n}">
+          <span class="sdk-etoiles" aria-hidden="true">${"★".repeat(N.n)}<span>${"★".repeat(5 - N.n)}</span></span>
+          <span class="carte-nom">${N.nom}</span>
+          <span class="carte-sous">${N.desc}</span>
+          <span class="carte-etat">${etat}${e.reussies ? ` · ${e.reussies} réussie${e.reussies > 1 ? "s" : ""}` : ""}</span>
+          ${prog}
+        </a>`;
+    }).join("");
+    app.innerHTML = `
+      <div class="page">
+        <header class="barre">
+          <a class="btn btn-retour" href="#/">← Accueil</a>
+          <h1>Sudoku</h1>
+        </header>
+        <p class="pz-consigne">Choisissez un niveau</p>
+        <div class="grilles-carnet sdk-niveaux">${cartes}</div>
+      </div>`;
+  }
+
+  function ecranJeuSudoku(n) {
+    n = +n;
+    if (!(n >= 1 && n <= 5)) { location.hash = "#/sudoku"; return; }
+    // Grille terminée : on en prépare une nouvelle en arrivant.
+    if (window.Sudoku.etat(n).fini) window.Sudoku.nouvelle(n);
+    vider();
+    document.title = "Sudoku";
+    nettoyage = window.Sudoku.ouvrir(app, n);
   }
 
   // ---------- Paramètres ----------
@@ -849,6 +892,8 @@
     else if (ecran === "puzzle-ajouter") ecranAjoutPZ();
     else if (ecran === "ajouter-photo") ecranAjoutPhoto(a || "");
     else if (ecran === "parametres") ecranParametres();
+    else if (ecran === "sudoku" && a) ecranJeuSudoku(a);
+    else if (ecran === "sudoku") ecranAccueilSudoku();
     else ecranPortail();
     window.scrollTo(0, 0);
   }
