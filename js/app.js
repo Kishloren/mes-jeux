@@ -2,7 +2,7 @@
 (function () {
   "use strict";
 
-  const VERSION_APP = "38"; // à incrémenter avec VERSION dans sw.js
+  const VERSION_APP = "39"; // à incrémenter avec VERSION dans sw.js
 
   const Store = {
     get(cle, defaut) {
@@ -96,10 +96,35 @@
     vider();
     document.title = "Mes jeux";
     const p = photos()[0];
-    const carre = (n, plein) => Array.from({ length: n }, (_, i) => `<i${plein(i) ? ' class="plein"' : ""}></i>`).join("");
-    const mosaique = p
-      ? Array.from({ length: 12 }, (_, i) => `<i style="background-image:url('${p.mini}');background-position:${(i % 4) * 33.3}% ${Math.floor(i / 4) * 50}%"></i>`).join("")
-      : Array.from({ length: 12 }, () => "<i></i>").join("");
+    // Mini-grille : rangées de cases ; « # » case noire, « . » case vide, « 7M » nombre + lettre.
+    const grille = (rangees, classe = "", brut = false) => {
+      const n = rangees[0].split(" ").length;
+      return `<span class="t-mini ${classe}" style="--n:${n}">${rangees.map((r) => r.split(" ").map((c) => {
+        if (c === "#") return '<i class="n"></i>';
+        if (c === ".") return "<i></i>";
+        const m = !brut && c.match(/^(\d+)(.*)$/);
+        return m ? `<i><sub>${m[1]}</sub>${m[2]}</i>` : `<i>${c}</i>`;
+      }).join("")).join("")}</span>`;
+    };
+    const trace = (pts, n, r) => `<svg class="t-trace" viewBox="0 0 ${n} ${r}" preserveAspectRatio="none" aria-hidden="true"><polyline points="${pts}"/></svg>`;
+    const pieces = p
+      ? Array.from({ length: 6 }, (_, i) => `<i style="background-image:url('${p.mini}');background-position:${(i % 3) * 50}% ${Math.floor(i / 3) * 100}%"></i>`).join("")
+      : Array.from({ length: 6 }, (_, i) => `<i class="c${i}"></i>`).join("");
+    const JEUX_PORTAIL = [
+      ["chasse-croise", "Chassé-croisé", "cc", grille(["1L 2A . 4M", "5E # 7S 8O", "9M 10O . 12T"])],
+      ["mots-codes", "Mots codés", "mc", grille(["7M 3O 12T #", "# 9U . 3O", "4A 7M 3O 1R"])],
+      ["mot-mysterieux", "Mot mystérieux", "mm", `<span class="t-mini t-avec-trace" style="--n:4">${[..."MOTSALIRECHE"].map((l) => `<i>${l}</i>`).join("")}${trace("0.5,1.5 3.5,1.5", 4, 3)}</span>`],
+      ["mots-zigzag", "Mots en zigzag", "zz", `<span class="t-mini t-avec-trace" style="--n:4">${[..."ZIGZMATOCHES"].map((l) => `<i>${l}</i>`).join("")}${trace("0.5,0.5 1.5,0.5 1.5,1.5 2.5,1.5 2.5,0.5 3.5,0.5 3.5,2.5", 4, 3)}</span>`],
+      ["mots-cases", "Mots casés", "mk", grille(["# M O T", "L A C #", "# I # A", "A L L O"])],
+      ["alphamot", "Alphamot", "am", `<span class="t-mini t-am2" style="--n:3"><i class="d">AEIST<br>T ↴</i><i>A</i><i>T</i><i>T</i><i>I</i><i class="d">**→</i><i>S</i><i></i><i>E</i></span>`],
+      ["sudoku", "Sudoku", "sdk", grille(["5 3 .", "6 . 1", ". 9 8"], "t-sdk2", true)],
+      ["puzzle", "Puzzle", "pz", `<span class="t-mini t-pieces">${pieces}</span>`],
+    ];
+    const tuiles = JEUX_PORTAIL.map(([href, nom, cls, dessin]) => `
+          <a class="tuile t-vif t-${cls}" href="#/${href}">
+            <span class="t-pastille">${nom}</span>
+            ${dessin}
+          </a>`).join("");
     app.innerHTML = `
       <div class="page">
         <header class="entete-portail">
@@ -109,39 +134,7 @@
           <h1>Mes jeux</h1>
           <p>Choisissez une activité</p>
         </header>
-        <div class="tuiles">
-          <a class="tuile t-carnet" href="#/chasse-croise">
-            <span class="t-carte"><span class="t-nom">Chassé-<br>croisé</span><span class="t-cc">${carre(5, () => true)}</span></span>
-          </a>
-          <a class="tuile t-carnet" href="#/mots-codes">
-            <span class="t-carte"><span class="t-nom t-serif">Mots<br>codés</span><span class="t-grille">${carre(16, (i) => i % 5 === 0)}</span></span>
-          </a>
-          <a class="tuile t-carnet" href="#/mot-mysterieux">
-            <span class="t-carte"><span class="t-nom t-serif">Mot<br>mystérieux</span><span class="t-mm">${[..."MOTSLIRE"].map((l) => `<i>${l}</i>`).join("")}<b></b></span></span>
-          </a>
-          <a class="tuile t-carnet" href="#/mots-zigzag">
-            <span class="t-carte"><span class="t-nom t-serif">Mots en<br>zigzag</span><span class="t-zz">${(() => {
-              // Lettres sur 3 rangées de 5, traversées par un chemin en zigzag.
-              const L = "ZIGZAMOTSCACHES";
-              const txt = [...L].map((l, i) => `<text x="${10 + (i % 5) * 20}" y="${16 + Math.floor(i / 5) * 20}">${l}</text>`).join("");
-              return `<svg viewBox="0 0 100 60" aria-hidden="true"><polyline points="10,10 30,10 30,30 50,30 50,10 70,10 70,30 70,50 90,50"/>${txt}</svg>`;
-            })()}</span></span>
-          </a>
-          <a class="tuile t-carnet" href="#/mots-cases">
-            <span class="t-carte"><span class="t-nom t-serif">Mots<br>casés</span><span class="t-mk">${"#MOT#|E#ICI|LAC#E|##AME".split("|").map((r) => [...r].map((l) => (l === "#" ? '<i class="n"></i>' : `<i>${l}</i>`)).join("")).join("")}</span></span>
-          </a>
-          <a class="tuile t-alpha" href="#/alphamot">
-            <span class="t-pastille">Alphamot</span>
-            <span class="t-am"><i class="d">AEIST<br>T ↴</i><i>A</i><i>T</i><i>T</i><i>I</i><i class="d">**→</i><i>S</i></span>
-          </a>
-          <a class="tuile t-carnet" href="#/sudoku">
-            <span class="t-carte"><span class="t-nom t-serif">Sudoku</span><span class="t-sdk">${"5 3 ··7·· 6··195··· 98····6·".replace(/ /g, "").slice(0, 9).split("").map((c) => `<i>${c === "·" ? "" : c}</i>`).join("")}</span></span>
-          </a>
-          <a class="tuile t-puzzle" href="#/puzzle">
-            <span class="t-bandeau">Puzzle</span>
-            <span class="t-mosaique">${mosaique}</span>
-          </a>
-        </div>
+        <div class="tuiles">${tuiles}</div>
         <p class="version">version ${VERSION_APP}</p>
       </div>`;
   }
