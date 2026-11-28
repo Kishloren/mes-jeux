@@ -114,7 +114,17 @@
       ctx.fillStyle = plein ? "#1B324B" : "#FFFDF8"; ctx.fill();
       if (!plein) { ctx.strokeStyle = "#C8843F"; ctx.lineWidth = 2; ctx.stroke(); }
     };
-    if (motif === "zz") {
+    if (motif === "mk") {
+      // Petite grille à cases noires, avec un mot casé.
+      const G = ["#MOT#", "E#I#C", "LAC#I", "#S#ME"];
+      ctx.font = police(24);
+      G.forEach((r, i) => [...r].forEach((l, j) => {
+        const x = 130 + j * 46, y = 310 + i * 46;
+        rect(x, y, 42, 42, 4);
+        ctx.fillStyle = l === "#" ? "#1B324B" : "#FFFDF8"; ctx.fill();
+        if (l !== "#") { ctx.strokeStyle = "#C8843F"; ctx.lineWidth = 2; ctx.stroke(); ctx.fillStyle = "#1B324B"; ctx.fillText(l, x + 21, y + 30); }
+      }));
+    } else if (motif === "zz") {
       // Lettres en grille, traversées d'un chemin en zigzag.
       const lettres = "ZIGZAGMOTSCHEMIN";
       ctx.font = police(26);

@@ -19,6 +19,7 @@
     "mot-mysterieux": ["mes-jeux-pack-mot-mysterieux"],
     alphamot: ["mes-jeux-pack-alphamot"],
     "mots-zigzag": ["mes-jeux-pack-mots-zigzag"],
+    "mots-cases": ["mes-jeux-pack-mots-cases"],
   };
 
   // ---------- IndexedDB ----------
@@ -247,6 +248,13 @@
         .map((g) => ({ id: g.id, nom: g.titre, niveau: g.niveau, solution: g.solution, definitions: g.definitions }))
         .filter((g) => window.Alphamot.valider(g).length === 0)
         .map((g) => ({ id: g.id, jeu: "am", grille: g, carnet: m.titre }));
+      progres(1, 1);
+    } else if (el.type === "mots-cases") {
+      progres(0, 1);
+      nouveaux = m.grilles
+        .map((g) => ({ id: g.id, nom: g.titre, niveau: g.niveau, solution: g.solution, mots: g.mots, amorce: g.amorce }))
+        .filter((g) => window.MotsCases.valider(g).length === 0)
+        .map((g) => ({ id: g.id, jeu: "mk", grille: g, carnet: m.titre }));
       progres(1, 1);
     } else if (el.type === "mots-zigzag") {
       progres(0, 1);

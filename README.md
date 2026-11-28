@@ -14,7 +14,7 @@ Cible prioritaire : les tablettes, en mode portrait.
   dans [docs/specification-bibliotheque.md](docs/specification-bibliotheque.md)
   (`https://www.stansgames.fr/jeux-tablette/api`) et conserve les contenus téléchargés sur l'appareil (IndexedDB).
   Les mots codés sont acceptés aux formats `mes-jeux-carnet-mc` et `mes-jeux-pack-mots-codes`.
-- Jeux : Chassé-croisé, Mots codés, Mot mystérieux (`mes-jeux-pack-mot-mysterieux`), Alphamot (`mes-jeux-pack-alphamot`), Mots en zigzag (`mes-jeux-pack-mots-zigzag`), Puzzle.
+- Jeux : Chassé-croisé, Mots codés, Mot mystérieux (`mes-jeux-pack-mot-mysterieux`), Alphamot (`mes-jeux-pack-alphamot`), Mots en zigzag (`mes-jeux-pack-mots-zigzag`), Mots casés (`mes-jeux-pack-mots-cases`), Puzzle.
 - Aucune photo personnelle ne doit être ajoutée à ce dépôt public.
 - Puzzle : l'accueil présente les packs d'images de la tablette ; le bouton ＋ permet d'en télécharger
   et de créer des packs avec ses photos (tablette ou Google Photos, mise en place : `docs/google-photos.md`).

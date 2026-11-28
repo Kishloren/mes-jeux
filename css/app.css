@@ -684,3 +684,42 @@ button { font: inherit; color: inherit; }
 .t-zz svg { width: 112px; height: 67px; display: block; }
 .t-zz polyline { fill: none; stroke: rgba(200, 132, 63, 0.5); stroke-width: 13; stroke-linecap: round; stroke-linejoin: round; }
 .t-zz text { font: bold 15px "DejaVu Serif Couverture", Georgia, serif; fill: #1b324b; text-anchor: middle; }
+
+/* ---------- Mots casés ---------- */
+.t-mk { display: grid; grid-template-columns: repeat(5, 19px); gap: 2px; }
+.t-mk i { height: 19px; display: flex; align-items: center; justify-content: center; font: bold 13px "DejaVu Serif Couverture", Georgia, serif; font-style: normal; color: #1b324b; background: #fffdf8; border: 1.5px solid #c8843f; box-sizing: border-box; border-radius: 3px; }
+.t-mk i.n { background: #1b324b; border-color: #1b324b; }
+.mk { height: 100%; height: 100dvh; display: flex; flex-direction: column; overflow: hidden; --mk: 36px; }
+.mk .barre { padding: 4px 10px; gap: 8px; }
+.mk-zone { flex: 1; min-height: 0; display: flex; align-items: center; justify-content: center; padding: 4px; }
+.mk-grille { display: grid; gap: 1px; background: #8a94a3; border: 2px solid var(--noir); }
+.mk-case {
+  width: var(--mk); height: var(--mk); background: #fff; display: flex; align-items: center; justify-content: center;
+  font-size: calc(var(--mk) * 0.62); font-weight: 700; color: var(--encre); cursor: pointer; user-select: none;
+}
+.mk-case.noire { background: #b5427a; cursor: default; }
+.mk-case.amorce { color: var(--revele); }
+.mk-case.sel { background: var(--sel); }
+.mk-case.err { color: var(--err); background: var(--err-fond); }
+.mk-case.refus { background: #ffc9c9; animation: mm-non 0.4s; }
+.mk.termine .mk-grille { border-color: var(--revele); }
+.mk-info {
+  flex: none; min-height: 56px; display: flex; align-items: center; justify-content: center; gap: 12px; flex-wrap: wrap;
+  padding: 4px 12px; background: #fff; border-top: 2px solid var(--bleu-clair); font-size: 18px; color: var(--gris);
+}
+.mk-info .btn { min-height: 42px; font-size: 18px; padding: 0 14px; }
+.mk-info-mot { font-size: 26px; font-weight: 800; letter-spacing: 0.1em; color: #7a1d4a; }
+.mk-info-aide { font-size: 16px; }
+.mk-mots {
+  flex: none; display: flex; flex-wrap: wrap; align-items: baseline; gap: 3px 12px;
+  padding: 8px 12px 12px; background: #fff; font-size: var(--mkf, 18px);
+}
+.mk-long {
+  flex-basis: auto; margin-left: 6px; padding: 1px 8px; border-radius: 6px; background: #b5427a; color: #fff;
+  font-size: 0.78em; font-weight: 700;
+}
+.mk-long:first-child { margin-left: 0; }
+.mk-mot { font-weight: 700; letter-spacing: 0.03em; color: var(--encre); padding: 1px 4px; border-radius: 6px; cursor: pointer; user-select: none; }
+.mk-mot.place { color: #a3abb7; text-decoration: line-through; }
+.mk-mot.choisi { background: var(--sel); color: var(--encre); text-decoration: none; box-shadow: 0 0 0 2px #e67700; }
+.mk-mot.selectionne { background: var(--bleu-clair); }

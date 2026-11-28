@@ -2,7 +2,7 @@
 (function () {
   "use strict";
 
-  const VERSION_APP = "36"; // à incrémenter avec VERSION dans sw.js
+  const VERSION_APP = "37"; // à incrémenter avec VERSION dans sw.js
 
   const Store = {
     get(cle, defaut) {
@@ -126,6 +126,9 @@
               const txt = [...L].map((l, i) => `<text x="${10 + (i % 5) * 20}" y="${16 + Math.floor(i / 5) * 20}">${l}</text>`).join("");
               return `<svg viewBox="0 0 100 60" aria-hidden="true"><polyline points="10,10 30,10 30,30 50,30 50,10 70,10 70,30 70,50 90,50"/>${txt}</svg>`;
             })()}</span></span>
+          </a>
+          <a class="tuile t-carnet" href="#/mots-cases">
+            <span class="t-carte"><span class="t-nom t-serif">Mots<br>casés</span><span class="t-mk">${"#MOT#|E#ICI|LAC#E|##AME".split("|").map((r) => [...r].map((l) => (l === "#" ? '<i class="n"></i>' : `<i>${l}</i>`)).join("")).join("")}</span></span>
           </a>
           <a class="tuile t-alpha" href="#/alphamot">
             <span class="t-pastille">Alphamot</span>
@@ -286,6 +289,25 @@
           </a>`, entamee: p.trouves > 0 };
       },
       raz: "Tous les mots trouvés dans cette grille seront effacés.",
+    },
+    "mots-cases": {
+      nom: "Mots casés",
+      motif: "mk",
+      module: () => window.MotsCases,
+      fini: (g) => window.MotsCases.progression(g).fini,
+      carte(g, href) {
+        const p = window.MotsCases.progression(g);
+        let etat, classe = "";
+        if (p.fini) { etat = "Terminée ✓"; classe = "finie"; }
+        else if (p.places <= 1) etat = `${p.total} mots à caser`;
+        else etat = `${p.places} mots sur ${p.total}`;
+        return { html: `<a class="carte ${classe}" href="${href}">
+            <span class="carte-nom">${echap(g.nom)}</span>
+            <span class="carte-etat">${etat}</span>
+            <span class="barre-prog"><span style="width:${(100 * p.places) / p.total}%"></span></span>
+          </a>`, entamee: p.places > 1 };
+      },
+      raz: "Tous les mots casés retourneront dans la liste.",
     },
     alphamot: {
       nom: "Alphamot",
