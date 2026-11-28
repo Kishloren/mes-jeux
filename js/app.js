@@ -2,7 +2,7 @@
 (function () {
   "use strict";
 
-  const VERSION_APP = "39"; // à incrémenter avec VERSION dans sw.js
+  const VERSION_APP = "40"; // à incrémenter avec VERSION dans sw.js
 
   const Store = {
     get(cle, defaut) {
@@ -120,6 +120,8 @@
       ["sudoku", "Sudoku", "sdk", grille(["5 3 .", "6 . 1", ". 9 8"], "t-sdk2", true)],
       ["puzzle", "Puzzle", "pz", `<span class="t-mini t-pieces">${pieces}</span>`],
     ];
+    // Par ordre alphabétique du nom du jeu.
+    JEUX_PORTAIL.sort((x, y) => x[1].localeCompare(y[1], "fr"));
     const tuiles = JEUX_PORTAIL.map(([href, nom, cls, dessin]) => `
           <a class="tuile t-vif t-${cls}" href="#/${href}">
             <span class="t-pastille">${nom}</span>
