@@ -114,7 +114,17 @@
       ctx.fillStyle = plein ? "#1B324B" : "#FFFDF8"; ctx.fill();
       if (!plein) { ctx.strokeStyle = "#C8843F"; ctx.lineWidth = 2; ctx.stroke(); }
     };
-    if (motif === "am") {
+    if (motif === "zz") {
+      // Lettres en grille, traversées d'un chemin en zigzag.
+      const lettres = "ZIGZAGMOTSCHEMIN";
+      ctx.font = police(26);
+      for (let i = 0; i < 4; i++) for (let j = 0; j < 4; j++) {
+        ctx.fillStyle = "#1B324B";
+        ctx.fillText(lettres[i * 4 + j], 171 + j * 46, 340 + i * 46);
+      }
+      ctx.strokeStyle = "rgba(200, 132, 63, 0.55)"; ctx.lineWidth = 30; ctx.lineCap = "round"; ctx.lineJoin = "round";
+      ctx.beginPath(); ctx.moveTo(171, 330); ctx.lineTo(217, 330); ctx.lineTo(217, 376); ctx.lineTo(263, 376); ctx.lineTo(263, 422); ctx.lineTo(309, 422); ctx.stroke();
+    } else if (motif === "am") {
       // Case définition (anagramme) et sa flèche, suivie des cases du mot.
       ctx.fillStyle = "#F0C9A0"; rect(84, 330, 62, 62, 6); ctx.fill();
       ctx.fillStyle = "#1B324B"; ctx.font = police(15); ctx.fillText("AEISTT", 115, 366);

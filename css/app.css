@@ -500,7 +500,10 @@ button { font: inherit; color: inherit; }
   position: absolute; inset: 2px; width: calc(100% - 4px); height: calc(100% - 4px);
   pointer-events: none; mix-blend-mode: multiply; overflow: visible;
 }
-.mm-traits line { stroke-linecap: round; stroke-width: 0.74; fill: none; }
+.mm-traits polyline { stroke-linecap: round; stroke-linejoin: round; stroke-width: 0.74; fill: none; }
+.mm-case.trace { background: #fff3bf; border-radius: 50%; box-shadow: inset 0 0 0 3px #fab005; }
+.mm-definition { font-size: 18px; font-style: italic; color: #8a3d24; text-align: center; }
+.zz .mm-mystere { flex-wrap: wrap; }
 .mm-trouve { opacity: 0.6; }
 .mm-sel { stroke: #ffd43b; opacity: 0.75; }
 .mm-sel.rate { stroke: #ff8787; transition: opacity 0.4s; opacity: 0; }
@@ -678,3 +681,6 @@ button { font: inherit; color: inherit; }
   background: #ffd43b; color: #7a1d00; font-size: 38px; font-weight: 800; box-shadow: 0 8px 18px rgba(0,0,0,.3);
 }
 .am-def-texte .pose { color: #d9c3ad; }
+.t-zz svg { width: 112px; height: 67px; display: block; }
+.t-zz polyline { fill: none; stroke: rgba(200, 132, 63, 0.5); stroke-width: 13; stroke-linecap: round; stroke-linejoin: round; }
+.t-zz text { font: bold 15px "DejaVu Serif Couverture", Georgia, serif; fill: #1b324b; text-anchor: middle; }
